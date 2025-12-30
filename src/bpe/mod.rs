@@ -2,8 +2,15 @@
 //!
 //! From-scratch implementation for multilingual text.
 
-pub mod decode;
-pub mod encode;
-pub mod train;
-pub mod types;
-pub mod vocab;
+mod decode;
+mod encode;
+mod io;
+mod train;
+mod types;
+mod vocab;
+
+pub use decode::decode;
+pub use encode::encode;
+pub use io::load;
+pub use io::save;
+pub use train::train;
