@@ -34,6 +34,18 @@ impl Vocabulary {
     pub fn is_empty(&self) -> bool {
         self.id_to_token.is_empty()
     }
+
+    /// Adds a token and returns its ID. If already exists, returns existing ID.
+    pub fn add_token(&mut self, token: String) -> BpeTokenId {
+        if let Some(&id) = self.token_to_id.get(&token) {
+            return id;
+        }
+
+        let id = self.id_to_token.len() as BpeTokenId;
+        self.token_to_id.insert(token.clone(), id);
+        self.id_to_token.push(token);
+        id
+    }
 }
 
 impl Default for Vocabulary {
