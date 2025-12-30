@@ -23,3 +23,10 @@ impl TextReader {
         })
     }
 }
+
+impl Iterator for TextReader {
+    type Item = io::Result<String>;
+    fn next(&mut self) -> Option<Self::Item> {
+        self.lines.next()
+    }
+}
