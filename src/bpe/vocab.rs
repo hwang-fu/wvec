@@ -77,6 +77,10 @@ impl Vocabulary {
     pub fn pairs_count(&self) -> usize {
         self.pairs.len()
     }
+
+    pub fn contains(&self, token: &str) -> bool {
+        self.token_to_id.contains_key(token)
+    }
 }
 
 impl Default for Vocabulary {
