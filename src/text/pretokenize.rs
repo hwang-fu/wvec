@@ -16,7 +16,6 @@ pub struct PreToken {
 ///
 /// - Latin text: split on whitespace and punctuation
 /// - CJK text: each character becomes a separate token
-/// - Mixed text: handled appropriately
 pub fn pretokenize(text: &str) -> Vec<PreToken> {
     let estimated_tokens = text.len() / 4 + 1;
     let mut tokens = Vec::with_capacity(estimated_tokens);
@@ -68,5 +67,62 @@ fn flush_token(tokens: &mut Vec<PreToken>, current: &mut String) {
         tokens.push(PreToken {
             text: std::mem::take(current),
         });
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    fn texts(tokens: &[PreToken]) -> Vec<&str> {
+        tokens.iter().map(|t| t.text.as_str()).collect()
+    }
+
+    #[test]
+    fn test_simple_english() {
+        let tokens = pretokenize("hello world");
+        assert_eq!(texts(&tokens), vec!["hello", "world"]);
+    }
+
+    #[test]
+    fn test_punctuation_separated() {
+        let tokens = pretokenize("hello, world!");
+        assert_eq!(texts(&tokens), vec!["hello", ",", "world", "!"]);
+    }
+
+    #[test]
+    fn test_apostrophe_kept() {
+        let tokens = pretokenize("don't can't");
+        assert_eq!(texts(&tokens), vec!["don't", "can't"]);
+    }
+
+    #[test]
+    fn test_chinese_char_level() {
+        let tokens = pretokenize("你好世界");
+        assert_eq!(texts(&tokens), vec!["你", "好", "世", "界"]);
+    }
+
+    #[test]
+    fn test_mixed_text() {
+        let tokens = pretokenize("hello你好world");
+        assert_eq!(texts(&tokens), vec!["hello", "你", "好", "world"]);
+    }
+
+    #[test]
+    fn test_german() {
+        let tokens = pretokenize("größe über");
+        assert_eq!(texts(&tokens), vec!["größe", "über"]);
+    }
+
+    #[test]
+    fn test_empty() {
+        let tokens = pretokenize("");
+        assert!(tokens.is_empty());
+    }
+
+    #[test]
+    fn test_whitespace_only() {
+        let tokens = pretokenize("   ");
+        assert!(tokens.is_empty());
     }
 }
