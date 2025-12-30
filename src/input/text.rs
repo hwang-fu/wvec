@@ -44,6 +44,79 @@ impl TextReader {
         })
     }
 
+    /// Reads next line, truncating if it exceeds max_line_length.
+    /// Returns None at EOF.
+    fn read_next_line(&mut self) -> io::Result<Option<String>> {
+        self.buffer.clear();
+        let mut total_read = 0;
+
+        loop {
+            let available = self.reader.fill_buf()?;
+
+            // EOF: return remaining buffer content or None
+            if available.is_empty() {
+                return if self.buffer.is_empty() {
+                    Ok(None)
+                } else {
+                    Ok(Some(std::mem::take(&mut self.buffer)))
+                };
+            }
+
+            // Search for newline in the available buffer
+            let newline_pos = available.iter().position(|&b| b == b'\n');
+
+            // Determine how many bytes to read from this chunk:
+            // - Up to newline if found, otherwise entire chunk
+            // - But never exceed remaining capacity
+            let chunk_end = newline_pos.unwrap_or(available.len());
+            let remaining_capacity = self.max_line_length.saturating_sub(total_read);
+            let to_take = chunk_end.min(remaining_capacity);
+
+            // Append bytes to buffer, handling UTF-8 validity
+            if to_take > 0 {
+                match std::str::from_utf8(&available[..to_take]) {
+                    Ok(s) => {
+                        self.buffer.push_str(s);
+                    }
+                    Err(e) => {
+                        // Partial UTF-8: take only the valid portion
+                        let valid_up_to = e.valid_up_to();
+                        if valid_up_to > 0 {
+                            // SAFETY: we just verified these bytes are valid UTF-8
+                            let s =
+                                unsafe { std::str::from_utf8_unchecked(&available[..valid_up_to]) };
+                            self.buffer.push_str(s);
+                        }
+                    }
+                }
+            }
+
+            total_read += to_take;
+
+            // Found newline: consume it and return the complete line
+            if let Some(pos) = newline_pos {
+                // Consume bytes up to and including the newline
+                self.reader.consume(pos + 1);
+
+                // Handle Windows-style line endings (\r\n)
+                if self.buffer.ends_with('\r') {
+                    self.buffer.pop();
+                }
+
+                return Ok(Some(std::mem::take(&mut self.buffer)));
+            }
+
+            // Consume the bytes we processed
+            self.reader.consume(chunk_end);
+
+            // Hit max capacity: skip remaining bytes until newline
+            if total_read >= self.max_line_length {
+                self.skip_until_newline()?;
+                return Ok(Some(std::mem::take(&mut self.buffer)));
+            }
+        }
+    }
+
     /// Discards bytes until the next newline character.
     fn skip_until_newline(&mut self) -> io::Result<()> {
         loop {
