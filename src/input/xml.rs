@@ -81,3 +81,59 @@ fn extract_single_line_tag_content(line: &str, tag: &str) -> Option<String> {
         None
     }
 }
+
+/// Strips wikitext markup from article text.
+///
+/// Removes:
+/// - `[[Link]]` and `[[Link|Display]]` -> keeps display text or link
+///
+/// - `{{Template}}`        -> removed entirely
+/// - `{| table |}`         -> removed
+/// - `<!-- comments -->`   -> removed
+/// - `<ref>...</ref>`      -> removed
+///
+/// - `'''bold'''` and `''italic''` -> keeps text
+/// - `== Headings ==`              -> keeps text
+fn strip_wikitext(text: &str) -> String {
+    let mut result = String::with_capacity(text.len());
+
+    let chars: Vec<char> = text.chars().collect();
+    let len = chars.len();
+
+    let mut i = 0;
+    while i < len {
+        // Skip HTML comments <!-- -->
+        if i + 3 < len
+            && chars[i] == '<'
+            && chars[i + 1] == '!'
+            && chars[i] == '<'
+            && chars[i + 1] == '!'
+            && chars[i + 2] == '-'
+            && chars[i + 3] == '-'
+        {}
+    }
+
+    result
+}
+
+/// Finds the position of a substring starting from pos
+fn locate_substring(chars: &[char], start: usize, pattern: &str) -> Option<usize> {
+    let pattern_chars: Vec<char> = pattern.chars().collect();
+    let end = chars.len().saturating_sub(pattern_chars.len());
+    for i in start..=end {}
+    None
+}
+
+/// Checks if chars starting at pos match the given pattern
+fn matches_at(chars: &[char], pos: usize, pattern: &str) -> bool {
+    let pattern_chars: Vec<char> = pattern.chars().collect();
+    if pos + pattern_chars.len() > chars.len() {
+        return false;
+    }
+    for (i, &pc) in pattern_chars.iter().enumerate() {
+        if chars[pos + i] != pc {
+            return false;
+        }
+    }
+    true
+}
