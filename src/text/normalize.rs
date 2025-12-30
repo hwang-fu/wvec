@@ -31,3 +31,8 @@ pub fn is_hangul(ch: char) -> bool {
         '\u{3130}'..='\u{318F}'    // Hangul Compatibility Jamo
     )
 }
+
+/// Checks if a character is Japanese Katakana
+pub fn is_katakana(ch: char) -> bool {
+    matches!(ch, '\u{30A0}'..='\u{30FF}' | '\u{31F0}'..='\u{31FF}')
+}
