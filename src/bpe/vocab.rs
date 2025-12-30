@@ -68,6 +68,11 @@ impl Vocabulary {
     pub fn add_pair(&mut self, left: BpeTokenId, right: BpeTokenId, id: BpeTokenId) {
         self.pairs.push(BpePair::new(left, right, id))
     }
+
+    /// Returns BPE pairs in priority order.
+    pub fn pairs(&self) -> &[BpePair] {
+        &self.pairs
+    }
 }
 
 impl Default for Vocabulary {
