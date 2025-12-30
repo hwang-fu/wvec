@@ -28,10 +28,10 @@ impl Args {
         let total_args: Vec<String> = env::args().collect();
 
         // Skip program name
-        let cmd = total_args.get(1).map(|s| s.as_str());
+        let cmd = total_args.get(1).cloned();
         let args: Vec<String> = total_args.into_iter().skip(2).collect();
 
-        let cmd = match cmd {
+        let cmd = match cmd.as_deref() {
             Some("train") => SubCommand::Train,
             Some("embed") => SubCommand::Embed,
             Some("similar") => SubCommand::Similar,
@@ -51,6 +51,7 @@ impl Args {
     }
 }
 
+/// Print usage information
 pub fn print_help() {
     println!(
         "wvec - Word2Vec in Rust + Fortran
