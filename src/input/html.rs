@@ -5,7 +5,7 @@
 use std::{
     borrow::Cow,
     fs::File,
-    io::{self, BufReader},
+    io::{self, BufReader, Read},
     path::Path,
     usize,
 };
@@ -39,6 +39,12 @@ impl HtmlReader {
             in_ignored_tag: false,
             ignored_tag: String::new(),
         })
+    }
+
+    pub fn read_all(&mut self) -> io::Result<String> {
+        let mut content = String::new();
+        self.reader.read_to_string(&mut content)?;
+        Ok(strip_html(&content))
     }
 }
 
