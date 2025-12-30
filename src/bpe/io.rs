@@ -68,6 +68,13 @@ fn write_string<W: Write>(writer: &mut W, s: &str) -> io::Result<()> {
     writer.flush()
 }
 
+/// Reads a u32 in little-endian format.
+fn read_u32<R: Read>(reader: &mut R) -> io::Result<u32> {
+    let mut buf = [0u8; 4];
+    reader.read_exact(&mut buf)?;
+    Ok(u32::from_le_bytes(buf))
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
