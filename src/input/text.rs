@@ -13,18 +13,28 @@ pub const DEFAULT_MAX_LINE_LENGTH: usize = 10 * 1024 * 1024;
 
 /// A stream reader for plain text files.
 pub struct TextReader {
-    lines: Lines<BufReader<File>>,
+    reader: BufReader<File>,
+    max_line_length: usize,
+    buffer: String,
 }
 
 impl TextReader {
     /// Opens a text file for streaming line-by-line reading.
     pub fn open<P: AsRef<Path>>(path: P) -> io::Result<Self> {
+        Self::open_with_limit(path, DEFAULT_MAX_LINE_LENGTH)
+    }
+
+    pub fn open_with_limit<P: AsRef<Path>>(path: P, max_line_length: usize) -> io::Result<Self> {
         let file = File::open(path)?;
         let reader = BufReader::new(file);
         Ok(Self {
-            lines: reader.lines(),
+            reader,
+            max_line_length,
+            buffer: String::new(),
         })
     }
+
+    fn read_next_line(&mut self) -> io::Result<Option<String>> {}
 }
 
 impl Iterator for TextReader {
