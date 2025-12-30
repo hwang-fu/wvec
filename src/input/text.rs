@@ -122,13 +122,15 @@ impl TextReader {
         loop {
             let available = self.reader.fill_buf()?;
 
+            // EOF: nothing more to skip
             if available.is_empty() {
                 return Ok(());
             }
 
+            // Look for newline in current buffer
             match available.iter().position(|&b| b == b'\n') {
                 Some(pos) => {
-                    // Found newline: consume up to and including it, done
+                    // Found newline: consume up to (inclusive) it, done
                     self.reader.consume(pos + 1);
                     return Ok(());
                 }
@@ -144,8 +146,14 @@ impl TextReader {
 
 impl Iterator for TextReader {
     type Item = io::Result<String>;
+
+    /// Advances the iterator and returns the next line.
     fn next(&mut self) -> Option<Self::Item> {
-        self.lines.next()
+        match self.read_next_line() {
+            Ok(Some(line)) => Some(Ok(line)),
+            Ok(None) => None,
+            Err(e) => Some(Err(e)),
+        }
     }
 }
 
@@ -175,6 +183,30 @@ mod tests {
         assert_eq!(lines[1], "it is just a text test file");
         assert_eq!(lines[2], "a line");
         assert_eq!(lines[3], "another line");
+
+        std::fs::remove_file(&path).unwrap();
+    }
+
+    #[test]
+    fn test_long_line_truncation() {
+        let dir = std::env::temp_dir();
+        let path = dir.join("wvec_test_with_long_line.txt");
+
+        // Create test file with a 1000-char line
+        {
+            let mut file = File::create(&path).unwrap();
+            let long_line = "x".repeat(1000);
+            writeln!(file, "{}", long_line).unwrap();
+            writeln!(file, "a fairly short line").unwrap();
+        }
+
+        // Reader with 100-char limit
+        let reader = TextReader::open_with_limit(&path, 100).unwrap();
+        let lines: Vec<String> = reader.map(|l| l.unwrap()).collect();
+
+        assert_eq!(lines.len(), 2);
+        assert_eq!(lines[0].len(), 100); // Truncated to limit
+        assert_eq!(lines[1], "a fairly short line"); // Unaffected
 
         std::fs::remove_file(&path).unwrap();
     }
