@@ -73,6 +73,10 @@ impl Vocabulary {
     pub fn pairs(&self) -> &[BpePair] {
         &self.pairs
     }
+
+    pub fn pairs_count(&self) -> usize {
+        self.pairs.len()
+    }
 }
 
 impl Default for Vocabulary {
