@@ -2,7 +2,7 @@
 
 /// Available subcommands
 #[derive(Debug)]
-pub enum Command {
+pub enum SubCommand {
     Train,
     Embed,
     Similar,
@@ -11,4 +11,11 @@ pub enum Command {
     BpeEncode,
     Info,
     Help,
+}
+
+/// Parsed command-line arguments
+#[derive(Debug)]
+pub struct Args {
+    pub cmd: SubCommand,
+    pub args: Vec<String>,
 }
