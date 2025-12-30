@@ -5,7 +5,7 @@
 //! - Punctuation normalization
 //! - Whitespace normalization
 
-/// Checks if a character is CJK (Chinese/Japanese/Korean)
+/// Checks if a character is CJK ideograph (Han character)
 pub fn is_cjk(ch: char) -> bool {
     matches!(ch,
         '\u{4E00}'..='\u{9FFF}'   |   // CJK Unified Ideographs
@@ -40,4 +40,10 @@ pub fn is_hiragana(ch: char) -> bool {
 /// Checks if a character is Japanese Katakana
 pub fn is_katakana(ch: char) -> bool {
     matches!(ch, '\u{30A0}'..='\u{30FF}' | '\u{31F0}'..='\u{31FF}')
+}
+
+/// Checks if a character is any East Asian script
+/// (CJK ideographs, Hiragana, Katakana, or Hangul)
+pub fn is_east_asian(ch: char) -> bool {
+    is_cjk(ch) || is_hiragana(ch) || is_katakana(ch) || is_hangul(ch)
 }
