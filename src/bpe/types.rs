@@ -26,3 +26,9 @@ pub struct MergeRule {
     /// Resulting merged token
     pub result: TokenId,
 }
+
+impl MergeRule {
+    pub fn new(fst: TokenId, snd: TokenId, result: TokenId) -> Self {
+        Self { fst, snd, result }
+    }
+}
