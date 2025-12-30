@@ -96,3 +96,82 @@ impl Default for Vocabulary {
         Self::new()
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use crate::bpe::types::{BOS_ID, EOS_ID, FIRST_REGULAR_ID, PAD_ID};
+
+    use super::*;
+
+    #[test]
+    fn test_new_has_special_tokens() {
+        let vocab = Vocabulary::new();
+        assert_eq!(vocab.len(), 4);
+        assert_eq!(vocab.get_id(UNK_TOKEN), UNK_ID);
+        assert_eq!(vocab.get_id(PAD_TOKEN), PAD_ID);
+        assert_eq!(vocab.get_id(BOS_TOKEN), BOS_ID);
+        assert_eq!(vocab.get_id(EOS_TOKEN), EOS_ID);
+    }
+
+    #[test]
+    fn test_add_token() {
+        let mut vocab = Vocabulary::new();
+        let id = vocab.add_token("hello".to_string());
+        assert_eq!(id, FIRST_REGULAR_ID);
+        assert_eq!(vocab.get_id("hello"), id);
+        assert_eq!(vocab.get_token(id), Some("hello"));
+    }
+
+    #[test]
+    fn test_add_duplicate() {
+        let mut vocab = Vocabulary::new();
+        let id1 = vocab.add_token("hello".to_string());
+        let id2 = vocab.add_token("hello".to_string());
+        assert_eq!(id1, id2);
+        assert_eq!(vocab.len(), 5); // 4 special + 1
+    }
+
+    #[test]
+    fn test_unknown_token() {
+        let vocab = Vocabulary::new();
+        assert_eq!(vocab.get_id("nonexistent"), UNK_ID);
+        assert_eq!(vocab.get_id_opt("nonexistent"), None);
+    }
+
+    #[test]
+    fn test_pairs() {
+        let mut vocab = Vocabulary::new();
+        let a = vocab.add_token("a".to_string());
+        let b = vocab.add_token("b".to_string());
+        let ab = vocab.add_token("ab".to_string());
+
+        vocab.add_pair(a, b, ab);
+
+        assert_eq!(vocab.pairs_count(), 1);
+        let pair = &vocab.pairs()[0];
+        assert_eq!(pair.left, a);
+        assert_eq!(pair.right, b);
+        assert_eq!(pair.id, ab);
+    }
+
+    #[test]
+    fn test_iter() {
+        let mut vocab = Vocabulary::new();
+        vocab.add_token("test".to_string());
+
+        let pairs: Vec<_> = vocab.iter().collect();
+        assert_eq!(pairs.len(), 5);
+        assert!(pairs.contains(&(UNK_TOKEN, UNK_ID)));
+        assert!(pairs.contains(&("test", FIRST_REGULAR_ID)));
+    }
+
+    #[test]
+    fn test_contains() {
+        let mut vocab = Vocabulary::new();
+        vocab.add_token("exists".to_string());
+
+        assert!(vocab.contains("exists"));
+        assert!(vocab.contains(UNK_TOKEN));
+        assert!(!vocab.contains("missing"));
+    }
+}
