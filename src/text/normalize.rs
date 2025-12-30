@@ -165,3 +165,43 @@ fn normalize_whitespace_char(ch: char) -> Option<char> {
         _ => None,
     }
 }
+
+/// Lowercases European accented letters (German, French, Polish)
+fn lowercase_european(ch: char) -> Option<char> {
+    match ch {
+        // German
+        'Ä' => Some('ä'),
+        'Ö' => Some('ö'),
+        'Ü' => Some('ü'),
+
+        // French
+        'À' => Some('à'),
+        'Â' => Some('â'),
+        'Æ' => Some('æ'),
+        'Ç' => Some('ç'),
+        'È' => Some('è'),
+        'É' => Some('é'),
+        'Ê' => Some('ê'),
+        'Ë' => Some('ë'),
+        'Î' => Some('î'),
+        'Ï' => Some('ï'),
+        'Ô' => Some('ô'),
+        'Œ' => Some('œ'),
+        'Ù' => Some('ù'),
+        'Û' => Some('û'),
+        'Ÿ' => Some('ÿ'),
+
+        // Polish
+        'Ą' => Some('ą'),
+        'Ć' => Some('ć'),
+        'Ę' => Some('ę'),
+        'Ł' => Some('ł'),
+        'Ń' => Some('ń'),
+        'Ó' => Some('ó'),
+        'Ś' => Some('ś'),
+        'Ź' => Some('ź'),
+        'Ż' => Some('ż'),
+
+        _ => None,
+    }
+}
