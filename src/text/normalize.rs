@@ -205,3 +205,29 @@ fn lowercase_european(ch: char) -> Option<char> {
         _ => None,
     }
 }
+
+/// Normalizes a single character, returns the normalized character
+#[inline]
+fn normalize_char(ch: char) -> char {
+    // ASCII uppercase -> lowercase
+    if ch.is_ascii_uppercase() {
+        return ch.to_ascii_lowercase();
+    }
+
+    // Try each normalization in order
+    if let Some(c) = normalize_quote(ch) {
+        return c;
+    }
+    if let Some(c) = normalize_dash(ch) {
+        return c;
+    }
+    if let Some(c) = normalize_whitespace_char(ch) {
+        return c;
+    }
+    if let Some(c) = lowercase_european(ch) {
+        return c;
+    }
+
+    // No normalization needed
+    ch
+}
