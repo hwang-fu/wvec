@@ -4,7 +4,65 @@
 
 use std::collections::HashMap;
 
-use crate::bpe::types::BpeTokenId;
+use crate::{
+    bpe::{
+        types::BpeTokenId,
+        vocab::{self, Vocabulary},
+    },
+    text::pretokenize,
+};
+
+/// Trains a BPE vocabulary from pre-tokenized text.
+pub fn train<'a, I>(pretokens: I, vocab_size: usize) -> Vocabulary
+where
+    I: Iterator<Item = &'a str>,
+{
+    let mut vocab = Vocabulary::new();
+
+    let mut sequences: Vec<Vec<BpeTokenId>> = Vec::new();
+    let mut freqs: Vec<u32> = Vec::new();
+
+    let mut seq_freq: HashMap<String, u32> = HashMap::new();
+    for pretoken in pretokens {
+        if !pretoken.is_empty() {
+            *seq_freq.entry(pretoken.to_string()).or_insert(0) += 1;
+        }
+    }
+
+    for (seq, freq) in seq_freq {
+        let mut tokens = Vec::new();
+        for ch in seq.chars() {
+            let id = vocab.add_token(ch.to_string());
+            tokens.push(id);
+        }
+        if !tokens.is_empty() {
+            sequences.push(tokens);
+            freqs.push(freq);
+        }
+    }
+
+    while vocab.len() < vocab_size {
+        let pair_counts = count_pairs(&sequences, &freqs);
+        if pair_counts.is_empty() {
+            break;
+        }
+
+        let ((left, right), _) = pair_counts.iter().max_by_key(|(_, count)| *count).unwrap();
+        let left = *left;
+        let right = *right;
+
+        let left_token = vocab.get_token(left).unwrap();
+        let right_token = vocab.get_token(right).unwrap();
+        let pair = format!("{}{}", left_token, right_token);
+        let pair_id = vocab.add_token(pair);
+
+        vocab.add_pair(left, right, pair_id);
+
+        apply_merge(&mut sequences, left, right, pair_id);
+    }
+
+    vocab
+}
 
 /// Counts adjacent token pair frequencies across all sequences.
 /// Returns a map from token pairs to their total frequency across the corpus.
@@ -15,7 +73,7 @@ use crate::bpe::types::BpeTokenId;
 ///
 /// After tokenization:
 ///   sequences:   [[7,4,11,11,14], [22,14,17,11,3]]   ("hello", "world")
-///   frequencies: [2, 1]                              (hello×2, world×1)
+///   frequencies: [2, 1]                              (hello x 2, world x 1)
 ///
 /// Pair counting for "hello" (freq=2):
 ///   (7,4)    +2
@@ -34,13 +92,14 @@ use crate::bpe::types::BpeTokenId;
 /// ```
 fn count_pairs(
     sequences: &[Vec<BpeTokenId>],
-    frequencies: &[u32],
+    freqs: &[u32],
 ) -> HashMap<(BpeTokenId, BpeTokenId), u64> {
     let mut counts: HashMap<(BpeTokenId, BpeTokenId), u64> = HashMap::new();
-    for (tokens, &word_count) in sequences.iter().zip(frequencies.iter()) {
-        for window in tokens.windows(2) {
+
+    for (seq, freq) in sequences.iter().zip(freqs.iter()) {
+        for window in seq.windows(2) {
             let pair = (window[0], window[1]);
-            *counts.entry(pair).or_insert(0) += word_count as u64;
+            *counts.entry(pair).or_insert(0) += (*freq) as u64;
         }
     }
 
