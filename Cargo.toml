@@ -1,0 +1,17 @@
+[package]
+name = "wvec"
+version = "0.1.0"
+edition = "2024"
+description = "A from-scratch multilingual Word2Vec implementation in Rust + Modern Fortran"
+license = "MIT"
+
+[dependencies]
+# Zero dependencies - 100% stdlib as per spec
+
+[[bin]]
+name = "wvec"
+path = "src/main.rs"
+
+[lib]
+name = "wvec"
+path = "src/lib.rs"
