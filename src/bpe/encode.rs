@@ -11,11 +11,22 @@ use crate::bpe::{
 ///
 /// Applies learned merge rules in priority order.
 pub fn encode(vocab: &Vocabulary, pretoken: &str) -> Vec<BpeTokenId> {
-    // TODO: Implement
-    // 1. Convert pretoken to character-level token IDs
-    // 2. Iteratively apply merge rules from vocab.pairs()
-    // 3. Return final sequence
-    panic!("TODO: encode")
+    if pretoken.is_empty() {
+        return Vec::new();
+    }
+
+    // Step 1: Convert to character-level token IDs
+    let mut ids: Vec<BpeTokenId> = pretoken
+        .chars()
+        .map(|ch| vocab.get_id(&ch.to_string()))
+        .collect();
+
+    // Step 2: Apply merge rules in priority order
+    for pair in vocab.pairs() {
+        apply_merge(&mut ids, pair.left, pair.right, pair.id);
+    }
+
+    ids
 }
 
 /// Decodes a sequence of token IDs back to a string.
