@@ -8,6 +8,9 @@ use std::{
     path::Path,
 };
 
+/// Default maximum line length (10 MB)
+pub const DEFAULT_MAX_LINE_LENGTH: usize = 10 * 1024 * 1024;
+
 /// A stream reader for plain text files.
 pub struct TextReader {
     lines: Lines<BufReader<File>>,
