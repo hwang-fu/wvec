@@ -2,7 +2,13 @@
 //!
 //! Strips HTML tags and decodes entities to extract plain text.
 
-use std::{borrow::Cow, fs::File, io::BufReader, usize};
+use std::{
+    borrow::Cow,
+    fs::File,
+    io::{self, BufReader},
+    path::Path,
+    usize,
+};
 
 /// Default buffer size for reading (24 KB)
 const DEFAULT_BUF_SIZE: usize = 3 * 1024;
@@ -22,7 +28,19 @@ pub struct HtmlReader {
     ignored_tag: String,
 }
 
-impl HtmlReader {}
+impl HtmlReader {
+    /// Opens an HTML file for text extraction.
+    pub fn open<P: AsRef<Path>>(path: P) -> io::Result<Self> {
+        let file = File::open(path)?;
+        let reader = BufReader::with_capacity(DEFAULT_BUF_SIZE, file);
+        Ok(Self {
+            reader,
+            buffer: String::new(),
+            in_ignored_tag: false,
+            ignored_tag: String::new(),
+        })
+    }
+}
 
 /// Strips HTML tags and decodes entities from text.
 ///
