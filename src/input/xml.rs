@@ -24,3 +24,16 @@ enum State {
     /// Inside <text> element (within page)
     InText,
 }
+
+/// A single Wikipedia article extracted from the dump
+#[derive(Debug, Clone)]
+pub struct WikiArticle {
+    /// Article title
+    pub title: String,
+    /// Article namespace (0 = main articles)
+    pub namespace: i32,
+    /// Article text content (wikitext stripped)
+    pub text: String,
+}
+
+pub struct WikiXmlReader {}
