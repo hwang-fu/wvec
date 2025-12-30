@@ -6,3 +6,4 @@
 pub mod cli;
 pub mod ffi;
 pub mod input;
+pub mod text;
