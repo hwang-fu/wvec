@@ -38,6 +38,13 @@ fn write_u32<W: Write>(writer: &mut W, value: u32) -> io::Result<()> {
     writer.write_all(&value.to_le_bytes())
 }
 
+/// Writes a length-prefixed UTF-8 string.
+fn write_string<W: Write>(writer: &mut W, s: &str) -> io::Result<()> {
+    let bytes = s.as_bytes();
+    write_u32(writer, bytes.len() as u32)?;
+    writer.write_all(bytes)
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
