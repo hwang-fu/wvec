@@ -75,6 +75,14 @@ fn read_u32<R: Read>(reader: &mut R) -> io::Result<u32> {
     Ok(u32::from_le_bytes(buf))
 }
 
+/// Reads a length-prefixed UTF-8 string.
+fn read_string<R: Read>(reader: &mut R) -> io::Result<String> {
+    let len = read_u32(reader)? as usize;
+    let mut buf = vec![0u8; len];
+    reader.read_exact(&mut buf)?;
+    String::from_utf8(buf).map_err(|e| io::Error::new(io::ErrorKind::InvalidData, e))
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
