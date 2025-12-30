@@ -66,6 +66,12 @@ pub struct WikiXmlReader {
 }
 
 impl WikiXmlReader {
+    /// Opens a Wikipedia XML dump file.
+    pub fn open<P: AsRef<Path>>(path: P) -> io::Result<Self> {
+        Self::open_with_options(path, true)
+    }
+
+    /// Opens a Wikipedia XML dump with custom options.
     pub fn open_with_options<P: AsRef<Path>>(
         path: P,
         main_namespace_only: bool,
