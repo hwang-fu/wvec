@@ -50,8 +50,46 @@ pub fn save(vocab: &Vocabulary, path: &Path) -> io::Result<()> {
 ///
 /// Returns an error if the file cannot be read or has invalid format.
 pub fn load(path: &Path) -> io::Result<Vocabulary> {
-    // TODO: Implement
-    panic!("TODO: load")
+    let file = File::open(path)?;
+    let mut reader = BufReader::new(file);
+
+    // Read and verify header
+    let mut magic = [0u8; 4];
+    reader.read_exact(&mut magic)?;
+    if &magic != MAGIC {
+        return Err(io::Error::new(
+            io::ErrorKind::InvalidData,
+            "invalid magic bytes",
+        ));
+    }
+
+    let version = read_u32(&mut reader)?;
+    if version != VERSION {
+        return Err(io::Error::new(
+            io::ErrorKind::InvalidData,
+            format!("unsupported version: {}", version),
+        ));
+    }
+
+    let vocab_size = read_u32(&mut reader)?;
+    let pairs_count = read_u32(&mut reader)?;
+
+    // Read tokens and build vocabulary
+    let mut vocab = Vocabulary::empty(); // We need this method!
+    for _id in 0..vocab_size {
+        let token = read_string(&mut reader)?;
+        vocab.add_token(token);
+    }
+
+    // Read merge pairs
+    for _ in 0..pairs_count {
+        let left = read_u32(&mut reader)?;
+        let right = read_u32(&mut reader)?;
+        let id = read_u32(&mut reader)?;
+        vocab.add_pair(left, right, id);
+    }
+
+    Ok(vocab)
 }
 
 /// Writes a u32 in little-endian format.
