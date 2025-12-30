@@ -60,6 +60,10 @@ impl Vocabulary {
     pub fn get_id_opt(&self, token: &str) -> Option<BpeTokenId> {
         self.token_to_id.get(token).copied()
     }
+
+    pub fn get_token(&self, id: BpeTokenId) -> Option<&str> {
+        self.id_to_token.get(id as usize).map(|s| s.as_str())
+    }
 }
 
 impl Default for Vocabulary {
