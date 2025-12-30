@@ -4,7 +4,7 @@
 
 use std::collections::HashMap;
 
-use crate::bpe::types::{BpePair, BpeTokenId};
+use crate::bpe::types::{BOS_TOKEN, BpePair, BpeTokenId, EOS_TOKEN, PAD_TOKEN, UNK_TOKEN};
 
 /// BPE Vocabulary with bidirectional lookup
 #[derive(Debug, Clone)]
@@ -21,6 +21,12 @@ impl Vocabulary {
             id_to_token: Vec::new(),
             pairs: Vec::new(),
         };
+
+        // Register special tokens
+        vocab.add_token(UNK_TOKEN.to_string());
+        vocab.add_token(PAD_TOKEN.to_string());
+        vocab.add_token(BOS_TOKEN.to_string());
+        vocab.add_token(EOS_TOKEN.to_string());
 
         vocab
     }
