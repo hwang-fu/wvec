@@ -89,6 +89,16 @@ impl Vocabulary {
             .enumerate()
             .map(|(id, tk)| (tk.as_str(), id as BpeTokenId))
     }
+
+    /// Creates an empty vocabulary without special tokens.
+    /// Used when loading from file.
+    pub fn empty() -> Self {
+        Self {
+            token_to_id: HashMap::new(),
+            id_to_token: Vec::new(),
+            pairs: Vec::new(),
+        }
+    }
 }
 
 impl Default for Vocabulary {
