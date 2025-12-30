@@ -4,7 +4,7 @@
 
 use std::{
     fs::File,
-    io::{self, BufRead, BufReader, Lines},
+    io::{self, BufRead, BufReader},
     path::Path,
 };
 
@@ -13,8 +13,17 @@ pub const DEFAULT_MAX_LINE_LENGTH: usize = 10 * 1024 * 1024;
 
 /// A stream reader for plain text files.
 pub struct TextReader {
+    /// Buffered reader wrapping the underlying file.
+    /// Reads in 8KB chunks by default.
     reader: BufReader<File>,
+
+    /// Maximum allowed line length in bytes.
+    /// Lines exceeding this limit are truncated, and remaining bytes
+    /// are discarded until the next newline.
     max_line_length: usize,
+
+    /// Reusable buffer for building the current line.
+    /// Cleared between lines to avoid repeated allocations.
     buffer: String,
 }
 
@@ -24,6 +33,7 @@ impl TextReader {
         Self::open_with_limit(path, DEFAULT_MAX_LINE_LENGTH)
     }
 
+    /// Opens a text file with custom max line length.
     pub fn open_with_limit<P: AsRef<Path>>(path: P, max_line_length: usize) -> io::Result<Self> {
         let file = File::open(path)?;
         let reader = BufReader::new(file);
@@ -34,7 +44,29 @@ impl TextReader {
         })
     }
 
-    fn read_next_line(&mut self) -> io::Result<Option<String>> {}
+    /// Discards bytes until the next newline character.
+    fn skip_until_newline(&mut self) -> io::Result<()> {
+        loop {
+            let available = self.reader.fill_buf()?;
+
+            if available.is_empty() {
+                return Ok(());
+            }
+
+            match available.iter().position(|&b| b == b'\n') {
+                Some(pos) => {
+                    // Found newline: consume up to and including it, done
+                    self.reader.consume(pos + 1);
+                    return Ok(());
+                }
+                None => {
+                    // No newline: discard entire buffer, continue
+                    let len = available.len();
+                    self.reader.consume(len);
+                }
+            }
+        }
+    }
 }
 
 impl Iterator for TextReader {
