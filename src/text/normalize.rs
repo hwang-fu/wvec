@@ -1,11 +1,8 @@
 //! Text normalization
 //!
-//! - Unicode normalization (NFC)
 //! - Case folding (lowercase for Latin scripts)
 //! - Punctuation normalization
 //! - Whitespace normalization
-
-use crate::text::normalize;
 
 /// Checks if a character is CJK ideograph (Han character)
 pub fn is_cjk(ch: char) -> bool {
@@ -85,6 +82,34 @@ pub fn normalize(text: &str) -> String {
             'Ö' => 'ö',
             'Ü' => 'ü',
 
+            // French accented letters
+            'À' => 'à',
+            'Â' => 'â',
+            'Æ' => 'æ',
+            'Ç' => 'ç',
+            'È' => 'è',
+            'É' => 'é',
+            'Ê' => 'ê',
+            'Ë' => 'ë',
+            'Î' => 'î',
+            'Ï' => 'ï',
+            'Ô' => 'ô',
+            'Œ' => 'œ',
+            'Ù' => 'ù',
+            'Û' => 'û',
+            'Ÿ' => 'ÿ',
+
+            // Polish special letters
+            'Ą' => 'ą',
+            'Ć' => 'ć',
+            'Ę' => 'ę',
+            'Ł' => 'ł',
+            'Ń' => 'ń',
+            'Ó' => 'ó',
+            'Ś' => 'ś',
+            'Ź' => 'ź',
+            'Ż' => 'ż',
+
             // Everything else as-is
             _ => ch,
         };
@@ -107,4 +132,15 @@ pub fn normalize(text: &str) -> String {
     }
 
     result
+}
+
+/// Normalizes fancy quotes to ASCII quotes
+fn normalize_quote(ch: char) -> Option<char> {
+    match ch {
+        // Single quotes: ' ' ‚ ‛
+        '\u{2018}' | '\u{2019}' | '\u{201A}' | '\u{201B}' => Some('\''),
+        // Double quotes: " " „ ‟
+        '\u{201C}' | '\u{201D}' | '\u{201E}' | '\u{201F}' => Some('"'),
+        _ => None,
+    }
 }
