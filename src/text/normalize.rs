@@ -32,6 +32,11 @@ pub fn is_hangul(ch: char) -> bool {
     )
 }
 
+/// Checks if a character is Japanese Hiragana
+pub fn is_hiragana(ch: char) -> bool {
+    matches!(ch, '\u{3040}'..='\u{309F}')
+}
+
 /// Checks if a character is Japanese Katakana
 pub fn is_katakana(ch: char) -> bool {
     matches!(ch, '\u{30A0}'..='\u{30FF}' | '\u{31F0}'..='\u{31FF}')
