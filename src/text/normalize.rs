@@ -28,6 +28,8 @@ pub fn is_hangul(ch: char) -> bool {
     matches!(ch,
         '\u{AC00}'..='\u{D7AF}' |  // Hangul Syllables
         '\u{1100}'..='\u{11FF}' |  // Hangul Jamo
+        '\u{A960}'..='\u{A97F}' |  // Hangul Jamo Extended-A
+        '\u{D7B0}'..='\u{D7FF}' |  // Hangul Jamo Extended-B
         '\u{3130}'..='\u{318F}'    // Hangul Compatibility Jamo
     )
 }
@@ -46,4 +48,28 @@ pub fn is_katakana(ch: char) -> bool {
 /// (CJK ideographs, Hiragana, Katakana, or Hangul)
 pub fn is_east_asian(ch: char) -> bool {
     is_cjk(ch) || is_hiragana(ch) || is_katakana(ch) || is_hangul(ch)
+}
+
+/// Collapses multiple whitespace characters into single spaces and trims.
+fn collapse_whitespace(s: &str) -> String {
+    let mut result = String::with_capacity(s.len());
+    let mut last_was_space = true;
+
+    for ch in s.chars() {
+        if ch.is_whitespace() {
+            if !last_was_space {
+                result.push(' ');
+                last_was_space = true;
+            }
+        } else {
+            result.push(ch);
+            last_was_space = false;
+        }
+    }
+
+    if result.ends_with(' ') {
+        result.pop();
+    }
+
+    result
 }
