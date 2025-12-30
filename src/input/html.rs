@@ -21,3 +21,30 @@ pub struct HtmlReader {
     /// The ignored tag name (script, style, etc.)
     ignored_tag: String,
 }
+
+impl HtmlReader {}
+
+/// Normalizes whitespace: collapses multiple spaces/newlines into single spaces.
+fn normalize_whitespace(s: &str) -> String {
+    let mut result = String::with_capacity(s.len());
+    let mut last_was_space = true; // Start true to trim leading space
+
+    for ch in s.chars() {
+        if ch.is_whitespace() {
+            if !last_was_space {
+                result.push(' ');
+                last_was_space = true;
+            }
+        } else {
+            result.push(ch);
+            last_was_space = false;
+        }
+    }
+
+    // Trim trailing space
+    if result.ends_with(' ') {
+        result.pop();
+    }
+
+    result
+}
