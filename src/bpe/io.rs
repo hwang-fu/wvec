@@ -19,8 +19,29 @@ const VERSION: u32 = 1;
 ///
 /// Returns an error if the file cannot be created or written.
 pub fn save(vocab: &Vocabulary, path: &Path) -> io::Result<()> {
-    // TODO: Implement
-    panic!("TODO: save")
+    let file = File::create(path)?;
+    let mut writer = BufWriter::new(file);
+
+    // Write header
+    writer.write_all(MAGIC)?;
+    write_u32(&mut writer, VERSION)?;
+    write_u32(&mut writer, vocab.len() as u32)?;
+    write_u32(&mut writer, vocab.pairs_count() as u32)?;
+
+    // Write tokens in ID order (0, 1, 2, ...)
+    for id in 0..vocab.len() as u32 {
+        let token = vocab.get_token(id).unwrap_or("");
+        write_string(&mut writer, token)?;
+    }
+
+    // Write merge pairs
+    for pair in vocab.pairs() {
+        write_u32(&mut writer, pair.left)?;
+        write_u32(&mut writer, pair.right)?;
+        write_u32(&mut writer, pair.id)?;
+    }
+
+    writer.flush()
 }
 
 /// Loads a vocabulary from a binary file.
@@ -35,14 +56,16 @@ pub fn load(path: &Path) -> io::Result<Vocabulary> {
 
 /// Writes a u32 in little-endian format.
 fn write_u32<W: Write>(writer: &mut W, value: u32) -> io::Result<()> {
-    writer.write_all(&value.to_le_bytes())
+    writer.write_all(&value.to_le_bytes())?;
+    writer.flush()
 }
 
 /// Writes a length-prefixed UTF-8 string.
 fn write_string<W: Write>(writer: &mut W, s: &str) -> io::Result<()> {
     let bytes = s.as_bytes();
     write_u32(writer, bytes.len() as u32)?;
-    writer.write_all(bytes)
+    writer.write_all(bytes)?;
+    writer.flush()
 }
 
 #[cfg(test)]
