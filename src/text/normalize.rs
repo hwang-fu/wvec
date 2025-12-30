@@ -5,6 +5,8 @@
 //! - Punctuation normalization
 //! - Whitespace normalization
 
+use crate::text::normalize;
+
 /// Checks if a character is CJK ideograph (Han character)
 pub fn is_cjk(ch: char) -> bool {
     matches!(ch,
@@ -49,24 +51,57 @@ pub fn is_katakana(ch: char) -> bool {
 pub fn is_east_asian(ch: char) -> bool {
     is_cjk(ch) || is_hiragana(ch) || is_katakana(ch) || is_hangul(ch)
 }
+/// Normalizes text for tokenization.
+///
+/// Steps:
+/// 1. Lowercase Latin characters
+/// 2. Normalize punctuation
+/// 3. Collapse whitespace
+pub fn normalize(text: &str) -> String {
+    let mut result = String::with_capacity(text.len());
+    let mut prev_whitespace = true; // Start true to trim leading space
 
-/// Collapses multiple whitespace characters into single spaces and trims.
-fn collapse_whitespace(s: &str) -> String {
-    let mut result = String::with_capacity(s.len());
-    let mut last_was_space = true;
+    for ch in text.chars() {
+        // Handle ellipsis separately (expands to multiple chars)
+        if ch == '\u{2026}' {
+            result.push_str("...");
+            prev_whitespace = false;
+            continue;
+        }
 
-    for ch in s.chars() {
-        if ch.is_whitespace() {
-            if !last_was_space {
+        let normalized = match ch {
+            // Lowercase ASCII
+            'A'..='Z' => ch.to_ascii_lowercase(),
+
+            // Normalize quotes
+            '\u{2018}' | '\u{2019}' | '\u{201A}' | '\u{201B}' => '\'',
+            '\u{201C}' | '\u{201D}' | '\u{201E}' | '\u{201F}' => '"',
+
+            // Normalize whitespace variants
+            '\u{00A0}' | '\u{2000}'..='\u{200A}' | '\u{202F}' | '\u{205F}' | '\u{3000}' => ' ',
+
+            // Lowercase German umlauts
+            'Ä' => 'ä',
+            'Ö' => 'ö',
+            'Ü' => 'ü',
+
+            // Everything else as-is
+            _ => ch,
+        };
+
+        // Collapse whitespace
+        if normalized.is_whitespace() {
+            if !prev_whitespace {
                 result.push(' ');
-                last_was_space = true;
+                prev_whitespace = true;
             }
         } else {
-            result.push(ch);
-            last_was_space = false;
+            result.push(normalized);
+            prev_whitespace = false;
         }
     }
 
+    // Trim trailing space
     if result.ends_with(' ') {
         result.pop();
     }
