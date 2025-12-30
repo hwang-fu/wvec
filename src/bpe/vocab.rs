@@ -56,6 +56,10 @@ impl Vocabulary {
     pub fn get_id(&self, token: &str) -> BpeTokenId {
         self.token_to_id.get(token).copied().unwrap_or(UNK_ID)
     }
+
+    pub fn get_id_opt(&self, token: &str) -> Option<BpeTokenId> {
+        self.token_to_id.get(token).copied()
+    }
 }
 
 impl Default for Vocabulary {
