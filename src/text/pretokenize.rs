@@ -30,30 +30,22 @@ pub fn pretokenize(text: &str) -> Vec<PreToken> {
             // Flush any accumulated Latin text
             flush_token(&mut tokens, &mut current);
 
-            // Add CJK char as its own token
-            tokens.push(PreToken {
-                text: ch.to_string(),
-            });
+            // Add CJK char as its own token (reuse a small buffer)
+            let mut s = String::with_capacity(4); // Max 4 bytes for UTF-8 char
+            s.push(ch);
+            tokens.push(PreToken { text: s });
             continue;
         }
 
         // Whitespace: flush current token
         if ch.is_whitespace() {
-            if !current.is_empty() {
-                tokens.push(PreToken {
-                    text: std::mem::take(&mut current),
-                });
-            }
+            flush_token(&mut tokens, &mut current);
             continue;
         }
 
         // Punctuation: separate token (unless it's an apostrophe in a word)
         if ch.is_ascii_punctuation() && ch != '\'' {
-            if !current.is_empty() {
-                tokens.push(PreToken {
-                    text: std::mem::take(&mut current),
-                });
-            }
+            flush_token(&mut tokens, &mut current);
             tokens.push(PreToken {
                 text: ch.to_string(),
             });
@@ -65,9 +57,7 @@ pub fn pretokenize(text: &str) -> Vec<PreToken> {
     }
 
     // Flush remaining
-    if !current.is_empty() {
-        tokens.push(PreToken { text: current });
-    }
+    flush_token(&mut tokens, &mut current);
 
     tokens
 }
