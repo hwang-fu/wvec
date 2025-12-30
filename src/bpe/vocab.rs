@@ -81,6 +81,14 @@ impl Vocabulary {
     pub fn contains(&self, token: &str) -> bool {
         self.token_to_id.contains_key(token)
     }
+
+    /// Iterates over all (token, id) pairs.
+    pub fn iter(&self) -> impl Iterator<Item = (&str, BpeTokenId)> {
+        self.id_to_token
+            .iter()
+            .enumerate()
+            .map(|(id, tk)| (tk.as_str(), id as BpeTokenId))
+    }
 }
 
 impl Default for Vocabulary {
