@@ -30,3 +30,34 @@ impl Iterator for TextReader {
         self.lines.next()
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use std::io::Write;
+
+    #[test]
+    fn test_read_lines() {
+        let dir = std::env::temp_dir();
+        let path = dir.join("wvec_test_text.txt");
+
+        {
+            let mut file = File::create(&path).unwrap();
+            writeln!(file, "hi").unwrap();
+            writeln!(file, "it is just a text test file").unwrap();
+            writeln!(file, "a line").unwrap();
+            writeln!(file, "another line").unwrap();
+        }
+
+        let reader = TextReader::open(&path).unwrap();
+        let lines: Vec<String> = reader.map(|l| l.unwrap()).collect();
+
+        assert_eq!(lines.len(), 4);
+        assert_eq!(lines[0], "hi");
+        assert_eq!(lines[1], "it is just a text test file");
+        assert_eq!(lines[2], "a line");
+        assert_eq!(lines[3], "another line");
+
+        std::fs::remove_file(&path).unwrap();
+    }
+}
