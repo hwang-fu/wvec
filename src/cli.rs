@@ -50,3 +50,24 @@ impl Args {
         Self { cmd, args }
     }
 }
+
+pub fn print_help() {
+    println!(
+        "wvec - Word2Vec in Rust + Fortran
+
+  USAGE:
+      wvec <COMMAND> [OPTIONS]
+
+  COMMANDS:
+      train       Train word vectors on a corpus
+      embed       Get embedding for text
+      similar     Find similar words
+      analogy     Solve word analogies
+      bpe-train   Train BPE tokenizer
+      bpe-encode  Encode text with BPE
+      info        Show model information
+      help        Show this help message
+
+  Run 'wvec <COMMAND> --help' for more information on a command."
+    );
+}
