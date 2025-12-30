@@ -144,3 +144,12 @@ fn normalize_quote(ch: char) -> Option<char> {
         _ => None,
     }
 }
+
+/// Normalizes dashes to ASCII hyphen
+fn normalize_dash(ch: char) -> Option<char> {
+    match ch {
+        // Hyphen, non-breaking hyphen, figure dash, en dash, em dash, horizontal bar
+        '\u{2010}'..='\u{2015}' => Some('-'),
+        _ => None,
+    }
+}
