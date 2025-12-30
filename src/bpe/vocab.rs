@@ -64,6 +64,10 @@ impl Vocabulary {
     pub fn get_token(&self, id: BpeTokenId) -> Option<&str> {
         self.id_to_token.get(id as usize).map(|s| s.as_str())
     }
+
+    pub fn add_pair(&mut self, left: BpeTokenId, right: BpeTokenId, id: BpeTokenId) {
+        self.pairs.push(BpePair::new(left, right, id))
+    }
 }
 
 impl Default for Vocabulary {
