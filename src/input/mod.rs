@@ -3,3 +3,4 @@
 //! Supports: plain text, XML (Wikipedia), HTML
 
 pub mod text;
+pub mod xml;

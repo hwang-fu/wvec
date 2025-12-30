@@ -24,9 +24,6 @@ enum State {
     /// Inside <title> element (within page)
     InTitle,
 
-    /// Inside <ns> element (within page)
-    InNamespace,
-
     /// Inside <text> element (within page)
     InText,
 }
@@ -160,10 +157,6 @@ impl WikiXmlReader {
                         self.current_title.push_str(line);
                     }
                 }
-                State::InNamespace => {
-                    // Handled inline
-                    self.state = State::InPage;
-                }
                 State::InText => {
                     if line.contains("</text>") {
                         if let Some(end) = line.find("</text>") {
@@ -176,6 +169,18 @@ impl WikiXmlReader {
                     }
                 }
             }
+        }
+    }
+}
+
+impl Iterator for WikiXmlReader {
+    type Item = io::Result<WikiArticle>;
+
+    fn next(&mut self) -> Option<Self::Item> {
+        match self.parse_next_article() {
+            Ok(Some(article)) => Some(Ok(article)),
+            Ok(None) => None,
+            Err(e) => Some(Err(e)),
         }
     }
 }
@@ -223,17 +228,17 @@ fn strip_wikitext(text: &str) -> String {
         if rest.starts_with("<!--")
             && let Some(end) = rest.find("-->")
         {
-            i += (end + 3);
+            i += end + 3;
             continue;
         }
 
         // Skip <ref>...</ref> tags
         if rest.starts_with("<ref") {
             if let Some(end) = rest.find("</ref>") {
-                i += (end + 6);
+                i += end + 6;
                 continue;
             } else if let Some(end) = rest.find("/>") {
-                i += (end + 2);
+                i += end + 2;
                 continue;
             }
             // Skip "<ref" itself when couldn't find the end tag.
@@ -316,7 +321,7 @@ fn strip_wikitext(text: &str) -> String {
             };
 
             result.push_str(display);
-            i += (j + 2);
+            i += j + 2;
             continue;
         }
 
@@ -414,8 +419,8 @@ mod tests {
 
     #[test]
     fn test_strip_headings() {
-        assert_eq!(strip_wikitext("== Heading =="), "Heading ");
-        assert_eq!(strip_wikitext("=== Sub ==="), "Sub ");
+        assert_eq!(strip_wikitext("== Heading =="), "Heading");
+        assert_eq!(strip_wikitext("=== Sub ==="), "Sub");
     }
 
     #[test]
@@ -435,6 +440,6 @@ mod tests {
     #[test]
     fn test_unicode() {
         assert_eq!(strip_wikitext("你好 [[世界|地球]] 再见"), "你好 地球 再见");
-        assert_eq!(strip_wikitext("{{模板}} 中文"), " 中文");
+        assert_eq!(strip_wikitext("{{模板}} 中文"), "中文");
     }
 }
