@@ -29,6 +29,11 @@ impl Vocabulary {
     pub fn len(&self) -> usize {
         self.id_to_token.len()
     }
+
+    /// Returns true if vocabulary is empty.
+    pub fn is_empty(&self) -> bool {
+        self.id_to_token.is_empty()
+    }
 }
 
 impl Default for Vocabulary {
