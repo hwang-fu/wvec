@@ -31,6 +31,11 @@ fn link_search_native(path: &Path) {
     println!("cargo:rustc-link-search=native={}", path.display());
 }
 
+/// Sets rpath so the binary can find shared libraries at runtime.
+fn set_rpath(path: &Path) {
+    println!("cargo:rustc-link-arg=-Wl,-rpath,{}", path.display());
+}
+
 /// Links a dynamic library.
 fn link_dylib(lib_name: &str) {
     println!("cargo:rustc-link-lib=dylib={}", lib_name);
@@ -52,6 +57,7 @@ fn main() {
 
     // Link configuration
     link_search_native(&fortran_dir);
+    set_rpath(&fortran_dir);
     link_dylib("wvec_core");
     link_dylib("openblas");
     link_dylib("gomp");
