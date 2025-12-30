@@ -3,7 +3,11 @@
 //! Streaming parser for MediaWiki XML dumps.
 //! Extracts article text and strips wikitext markup.
 
-use std::{fs::File, io::BufReader};
+use std::{
+    fs::File,
+    io::{self, BufReader},
+    path::Path,
+};
 
 /// Default buffer size for reading (24 KB)
 const DEFAULT_BUF_SIZE: usize = 24 * 1024;
@@ -61,7 +65,24 @@ pub struct WikiXmlReader {
     main_namespace_only: bool,
 }
 
-impl WikiXmlReader {}
+impl WikiXmlReader {
+    pub fn open_with_options<P: AsRef<Path>>(
+        path: P,
+        main_namespace_only: bool,
+    ) -> io::Result<Self> {
+        let file = File::open(path)?;
+        let reader = BufReader::with_capacity(DEFAULT_BUF_SIZE, file);
+        Ok(Self {
+            reader,
+            state: State::Idle,
+            line_buffer: String::new(),
+            current_title: String::new(),
+            current_namespace: 0,
+            current_text: String::new(),
+            main_namespace_only,
+        })
+    }
+}
 
 /// Extracts content between simple single line opening and closing tags on a single line.
 /// e.g., <title>Article Name</title>, <ns>0</ns>
@@ -261,4 +282,63 @@ fn strip_wikitext(text: &str) -> String {
     }
 
     result.trim().to_string()
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_strip_comments() {
+        assert_eq!(
+            strip_wikitext("hello <!-- comment --> world"),
+            "hello  world"
+        );
+    }
+
+    #[test]
+    fn test_strip_templates() {
+        assert_eq!(strip_wikitext("hello {{template}} world"), "hello  world");
+        assert_eq!(strip_wikitext("{{nested {{inner}}}}"), "");
+    }
+
+    #[test]
+    fn test_strip_links() {
+        assert_eq!(strip_wikitext("[[Link]]"), "Link");
+        assert_eq!(strip_wikitext("[[Target|Display]]"), "Display");
+        assert_eq!(strip_wikitext("[[Category:Test]]"), "");
+        assert_eq!(strip_wikitext("[[File:Image.png]]"), "");
+    }
+
+    #[test]
+    fn test_strip_formatting() {
+        assert_eq!(strip_wikitext("'''bold'''"), "bold");
+        assert_eq!(strip_wikitext("''italic''"), "italic");
+    }
+
+    #[test]
+    fn test_strip_headings() {
+        assert_eq!(strip_wikitext("== Heading =="), "Heading ");
+        assert_eq!(strip_wikitext("=== Sub ==="), "Sub ");
+    }
+
+    #[test]
+    fn test_strip_refs() {
+        assert_eq!(strip_wikitext("text<ref>citation</ref>more"), "textmore");
+        assert_eq!(strip_wikitext("text<ref name=\"x\"/>more"), "textmore");
+    }
+
+    #[test]
+    fn test_strip_tables() {
+        assert_eq!(
+            strip_wikitext("before {| table content |} after"),
+            "before  after"
+        );
+    }
+
+    #[test]
+    fn test_unicode() {
+        assert_eq!(strip_wikitext("你好 [[世界|地球]] 再见"), "你好 地球 再见");
+        assert_eq!(strip_wikitext("{{模板}} 中文"), " 中文");
+    }
 }
