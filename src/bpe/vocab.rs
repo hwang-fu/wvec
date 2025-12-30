@@ -4,12 +4,35 @@
 
 use std::collections::HashMap;
 
-use crate::bpe::types::{MergeRule, TokenId};
+use crate::bpe::types::{BpePair, BpeTokenId};
 
 /// BPE Vocabulary with bidirectional lookup
 #[derive(Debug, Clone)]
 pub struct Vocabulary {
-    token_to_id: HashMap<String, TokenId>,
+    token_to_id: HashMap<String, BpeTokenId>,
     id_to_token: Vec<String>,
-    merges: Vec<MergeRule>,
+    pairs: Vec<BpePair>,
+}
+
+impl Vocabulary {
+    pub fn new() -> Self {
+        let mut vocab = Self {
+            token_to_id: HashMap::new(),
+            id_to_token: Vec::new(),
+            pairs: Vec::new(),
+        };
+
+        vocab
+    }
+
+    /// Returns vocabulary size (number of tokens).
+    pub fn len(&self) -> usize {
+        self.id_to_token.len()
+    }
+}
+
+impl Default for Vocabulary {
+    fn default() -> Self {
+        Self::new()
+    }
 }
