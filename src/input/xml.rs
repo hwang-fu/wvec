@@ -5,7 +5,7 @@
 
 use std::{
     fs::File,
-    io::{self, BufReader},
+    io::{self, BufRead, BufReader},
     path::Path,
 };
 
@@ -87,6 +87,96 @@ impl WikiXmlReader {
             current_text: String::new(),
             main_namespace_only,
         })
+    }
+
+    /// Parses the next article from the dump.
+    fn parse_next_article(&mut self) -> io::Result<Option<WikiArticle>> {
+        loop {
+            self.line_buffer.clear();
+            let bytes_read = self.reader.read_line(&mut self.line_buffer)?;
+
+            // EOF
+            if bytes_read == 0 {
+                return Ok(None);
+            }
+
+            let line = self.line_buffer.trim();
+
+            match self.state {
+                State::Idle => {
+                    if line.contains("<page>") {
+                        self.state = State::InPage;
+                        self.current_title.clear();
+                        self.current_namespace = 0;
+                        self.current_text.clear();
+                    }
+                }
+                State::InPage => {
+                    if line.contains("<title>") {
+                        self.state = State::InTitle;
+                        if let Some(content) = extract_single_line_tag_content(line, "title") {
+                            self.current_title = content;
+                            self.state = State::InPage;
+                        }
+                    } else if line.contains("<ns>") {
+                        if let Some(content) = extract_single_line_tag_content(line, "ns") {
+                            self.current_namespace = content.parse().unwrap_or(0);
+                        }
+                    } else if line.contains("<text>") {
+                        self.state = State::InText;
+                        // Handle text on same line as opening tag
+                        if let Some(start) = line.find('>') {
+                            let content = &line[start + 1..];
+                            if let Some(end) = content.find("</text>") {
+                                // Complete text on one line
+                                self.current_text = content[..end].to_string();
+                                self.state = State::InPage;
+                            } else {
+                                self.current_text = content.to_string();
+                            }
+                        }
+                    } else if line.contains("</page>") {
+                        self.state = State::Idle;
+
+                        // Filter by namespace if requested
+                        if self.main_namespace_only && self.current_namespace != 0 {
+                            continue;
+                        }
+
+                        return Ok(Some(WikiArticle {
+                            title: self.current_title.clone(),
+                            namespace: self.current_namespace,
+                            text: strip_wikitext(&self.current_text),
+                        }));
+                    }
+                }
+                State::InTitle => {
+                    if line.contains("</title>") {
+                        if let Some(end) = line.find("</title>") {
+                            self.current_title.push_str(&line[..end]);
+                        }
+                        self.state = State::InPage;
+                    } else {
+                        self.current_title.push_str(line);
+                    }
+                }
+                State::InNamespace => {
+                    // Handled inline
+                    self.state = State::InPage;
+                }
+                State::InText => {
+                    if line.contains("</text>") {
+                        if let Some(end) = line.find("</text>") {
+                            self.current_text.push_str(&line[..end]);
+                        }
+                        self.state = State::InPage;
+                    } else {
+                        self.current_text.push('\n');
+                        self.current_text.push_str(line);
+                    }
+                }
+            }
+        }
     }
 }
 
