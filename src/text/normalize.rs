@@ -153,3 +153,15 @@ fn normalize_dash(ch: char) -> Option<char> {
         _ => None,
     }
 }
+
+/// Normalizes whitespace variants to ASCII space
+fn normalize_whitespace_char(ch: char) -> Option<char> {
+    match ch {
+        '\u{00A0}' |                  // Non-breaking space
+        '\u{2000}'..='\u{200A}' |     // Various typographic spaces
+        '\u{202F}' |                  // Narrow no-break space
+        '\u{205F}' |                  // Medium mathematical space
+        '\u{3000}' => Some(' '),      // Ideographic space (全角空格)
+        _ => None,
+    }
+}
