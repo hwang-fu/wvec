@@ -95,6 +95,31 @@ unsafe extern "C" {
         n: c_int,
         scale: c_float,
     ) -> c_int;
+
+    // Word2Vec model functions
+    /// Initialize model with vocab_size and embedding dimension
+    pub fn wvec_model_init(vocab_size: c_int, dim: c_int) -> c_int;
+
+    /// Free model memory
+    pub fn wvec_model_free();
+
+    /// Get model dimensions
+    pub fn wvec_model_get_dims(vocab_size: *mut c_int, dim: *mut c_int);
+
+    /// Check if model is initialized (returns 1 if true, 0 if false)
+    pub fn wvec_model_is_init() -> c_int;
+
+    /// Copy embedding for word_id to output buffer
+    pub fn wvec_get_embedding(word_id: c_int, out_vec: *mut c_float, out_len: c_int) -> c_int;
+
+    /// Train one skip-gram pair with negative sampling
+    pub fn wvec_train_pair(
+        center_id: c_int,
+        context_id: c_int,
+        neg_ids: *const c_int,
+        n_neg: c_int,
+        lr: c_float,
+    ) -> c_int;
 }
 
 #[cfg(test)]
@@ -175,5 +200,75 @@ mod tests {
         let arr: Vec<f32> = vec![];
         let result = array_sum(&arr);
         assert!((result - 0.0).abs() < 1e-6);
+    }
+
+    #[test]
+    fn test_model_init_free() {
+        unsafe {
+            // Initialize model
+            let status = wvec_model_init(100, 64);
+            assert_eq!(status, status::SUCCESS);
+            assert_eq!(wvec_model_is_init(), 1);
+
+            // Check dimensions
+            let mut vocab_size: c_int = 0;
+            let mut dim: c_int = 0;
+            wvec_model_get_dims(&mut vocab_size, &mut dim);
+            assert_eq!(vocab_size, 100);
+            assert_eq!(dim, 64);
+
+            // Free model
+            wvec_model_free();
+            assert_eq!(wvec_model_is_init(), 0);
+        }
+    }
+
+    #[test]
+    fn test_get_embedding() {
+        unsafe {
+            let status = wvec_model_init(10, 8);
+            assert_eq!(status, status::SUCCESS);
+
+            let mut embedding = [0.0f32; 8];
+            let status = wvec_get_embedding(0, embedding.as_mut_ptr(), 8);
+            assert_eq!(status, status::SUCCESS);
+
+            // Embedding should be non-zero (randomly initialized)
+            let sum: f32 = embedding.iter().map(|x| x.abs()).sum();
+            assert!(sum > 0.0);
+
+            wvec_model_free();
+        }
+    }
+
+    #[test]
+    fn test_train_pair() {
+        unsafe {
+            let status = wvec_model_init(100, 32);
+            assert_eq!(status, status::SUCCESS);
+
+            // Get embedding before training
+            let mut emb_before = [0.0f32; 32];
+            wvec_get_embedding(5, emb_before.as_mut_ptr(), 32);
+
+            // Train one pair: center=5, context=10, negatives=[20, 30, 40]
+            let neg_ids: [c_int; 3] = [20, 30, 40];
+            let status = wvec_train_pair(5, 10, neg_ids.as_ptr(), 3, 0.025);
+            assert_eq!(status, status::SUCCESS);
+
+            // Get embedding after training
+            let mut emb_after = [0.0f32; 32];
+            wvec_get_embedding(5, emb_after.as_mut_ptr(), 32);
+
+            // Embedding should have changed
+            let diff: f32 = emb_before
+                .iter()
+                .zip(emb_after.iter())
+                .map(|(a, b)| (a - b).abs())
+                .sum();
+            assert!(diff > 0.0, "Embedding should change after training");
+
+            wvec_model_free();
+        }
     }
 }
