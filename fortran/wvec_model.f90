@@ -117,4 +117,15 @@ contains
     g_shutdown_requested = .true.
   end subroutine wvec_shutdown_request
 
+  !> Check if shutdown was requested
+  !> Returns: 1 if shutdown requested, 0 otherwise
+  function wvec_shutdown_check() result(requested) bind(C, name="wvec_shutdown_check")
+    integer(c_int) :: requested
+    if (g_shutdown_requested) then
+      requested = 1
+    else
+      requested = 0
+    end if
+  end function wvec_shutdown_check
+
 end module wvec_model
