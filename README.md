@@ -8,6 +8,8 @@
 [![OpenMP](https://img.shields.io/badge/OpenMP-Parallel-green)](https://www.openmp.org/)
 [![License](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 
+**English | [Deutsch](docs/README.de.md) | [Français](docs/README.fr.md) | [繁體中文](docs/README.zh.md) | [한국어](docs/README.kr.md) | [日本語](docs/README.jp.md)**
+
 ---
 
 ## Overview
@@ -148,7 +150,7 @@ brew install gcc openblas
 ### Build
 
 ```bash
-git clone https://github.com/yourusername/wvec.git
+git clone https://github.com/hwang-fu/wvec.git
 cd wvec
 cargo build --release
 ```
