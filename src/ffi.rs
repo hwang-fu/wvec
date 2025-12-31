@@ -182,6 +182,16 @@ unsafe extern "C" {
         path_len: c_int,
         temp_c: *mut c_int,
     ) -> c_int;
+
+    // Shutdown functions
+    /// Request graceful shutdown
+    pub fn wvec_shutdown_request();
+
+    /// Check if shutdown was requested (returns 1 if yes, 0 if no)
+    pub fn wvec_shutdown_check() -> c_int;
+
+    /// Reset shutdown flag
+    pub fn wvec_shutdown_reset();
 }
 
 #[cfg(test)]
