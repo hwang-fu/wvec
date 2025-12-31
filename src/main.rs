@@ -6,26 +6,54 @@ fn main() {
 
     match args.cmd {
         SubCommand::Train => {
-            println!("TODO: train command");
+            if let Err(e) = wvec::cmd::train::run(&args.args) {
+                eprintln!("Error: {}", e);
+                std::process::exit(1);
+            }
         }
+
         SubCommand::Embed => {
-            println!("TODO: embed command");
+            if let Err(e) = wvec::cmd::embed::run(&args.args) {
+                eprintln!("Error: {}", e);
+                std::process::exit(1);
+            }
         }
+
         SubCommand::Similar => {
-            println!("TODO: similar command");
+            if let Err(e) = wvec::cmd::similar::run(&args.args) {
+                eprintln!("Error: {}", e);
+                std::process::exit(1);
+            }
         }
+
         SubCommand::Analogy => {
-            println!("TODO: analogy command");
+            if let Err(e) = wvec::cmd::analogy::run(&args.args) {
+                eprintln!("Error: {}", e);
+                std::process::exit(1);
+            }
         }
+
         SubCommand::BpeTrain => {
-            println!("TODO: bpe-train command");
+            if let Err(e) = wvec::cmd::bpe_train::run(&args.args) {
+                eprintln!("Error: {}", e);
+                std::process::exit(1);
+            }
         }
+
         SubCommand::BpeEncode => {
-            println!("TODO: bpe-encode command");
+            if let Err(e) = wvec::cmd::bpe_encode::run(&args.args) {
+                eprintln!("Error: {}", e);
+                std::process::exit(1);
+            }
         }
+
         SubCommand::Info => {
-            println!("TODO: info command");
+            if let Err(e) = wvec::cmd::info::run(&args.args) {
+                eprintln!("Error: {}", e);
+                std::process::exit(1);
+            }
         }
+
         SubCommand::Help => {
             cli::print_help();
         }

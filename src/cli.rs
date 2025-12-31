@@ -51,6 +51,18 @@ impl Args {
     }
 }
 
+/// Simple argument parser for --key value pairs
+pub fn get_arg(args: &[String], key: &str) -> Option<String> {
+    args.iter()
+        .position(|a| a == key)
+        .and_then(|i| args.get(i + 1).cloned())
+}
+
+/// Check if flag is present
+pub fn has_flag(args: &[String], flag: &str) -> bool {
+    args.iter().any(|a| a == flag)
+}
+
 /// Print usage information
 pub fn print_help() {
     println!(
