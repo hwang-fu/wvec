@@ -87,4 +87,22 @@ contains
     end if
   end function wvec_thermal_check
 
+  function wvec_thermal_get_celsius(path, path_len, temp_c) &
+    result(status) bind(C, name="wvec_thermal_get_celsius")
+    character(kind=c_char), intent(in) :: path(*)
+    integer(c_int), intent(in), value :: path_len
+    integer(c_int), intent(out) :: temp_c
+    integer(c_int) :: status
+
+    integer(c_int) :: temp_mc
+
+    status = wvec_thermal_read(path, path_len, temp_mc)
+    if (status /= 0) then
+      temp_c = 0
+      return
+    end if
+
+    temp_c = temp_mc / 1000
+  end function wvec_thermal_get_celsius
+
 end module wvec_thermal
