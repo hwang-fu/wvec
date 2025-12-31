@@ -49,6 +49,9 @@ impl std::fmt::Display for FfiError {
             Self::InvalidSize => write!(f, "invalid size"),
             Self::OutOfMemory => write!(f, "out of memory"),
             Self::Unknown(code) => write!(f, "unknown error (code {})", code),
+            Self::FileIo => write!(f, "file I/O error"),
+            Self::InvalidMagic => write!(f, "invalid checkpoint magic bytes"),
+            Self::UnsupportedVersion => write!(f, "unsupported checkpoint version"),
         }
     }
 }
@@ -136,6 +139,25 @@ unsafe extern "C" {
         neg_table: *const c_int,
         neg_table_size: c_int,
         lr: c_float,
+    ) -> c_int;
+
+    // Checkpoint functions
+    /// Save model state to checkpoint file
+    /// Returns 0 on success, negative on error
+    pub fn wvec_checkpoint_save(
+        filename: *const std::ffi::c_char,
+        filename_len: c_int,
+        epoch: c_int,
+        learning_rate: c_float,
+    ) -> c_int;
+
+    /// Load model state from checkpoint file
+    /// Returns 0 on success, negative on error
+    pub fn wvec_checkpoint_load(
+        filename: *const std::ffi::c_char,
+        filename_len: c_int,
+        epoch: *mut c_int,
+        learning_rate: *mut c_float,
     ) -> c_int;
 }
 
@@ -313,6 +335,72 @@ mod tests {
             assert_eq!(status, status::SUCCESS);
 
             wvec_model_free();
+        }
+    }
+
+    #[test]
+    fn test_checkpoint_save_load() {
+        use std::fs;
+
+        unsafe {
+            // Initialize model
+            let status = wvec_model_init(50, 16);
+            assert_eq!(status, status::SUCCESS);
+
+            // Get an embedding before save
+            let mut emb_before = [0.0f32; 16];
+            wvec_get_embedding(5, emb_before.as_mut_ptr(), 16);
+
+            // Save checkpoint
+            let path = "/tmp/wvec_test_checkpoint.bin";
+            let status = wvec_checkpoint_save(
+                path.as_ptr() as *const std::ffi::c_char,
+                path.len() as c_int,
+                42,   // epoch
+                0.01, // learning_rate
+            );
+            assert_eq!(status, status::SUCCESS);
+
+            // Free and verify model is gone
+            wvec_model_free();
+            assert_eq!(wvec_model_is_init(), 0);
+
+            // Load checkpoint
+            let mut epoch: c_int = 0;
+            let mut lr: c_float = 0.0;
+            let status = wvec_checkpoint_load(
+                path.as_ptr() as *const std::ffi::c_char,
+                path.len() as c_int,
+                &mut epoch,
+                &mut lr,
+            );
+            assert_eq!(status, status::SUCCESS);
+            assert_eq!(wvec_model_is_init(), 1);
+            assert_eq!(epoch, 42);
+            assert!((lr - 0.01).abs() < 1e-6);
+
+            // Check dimensions restored
+            let mut vocab_size: c_int = 0;
+            let mut dim: c_int = 0;
+            wvec_model_get_dims(&mut vocab_size, &mut dim);
+            assert_eq!(vocab_size, 50);
+            assert_eq!(dim, 16);
+
+            // Check embedding is identical
+            let mut emb_after = [0.0f32; 16];
+            wvec_get_embedding(5, emb_after.as_mut_ptr(), 16);
+            for i in 0..16 {
+                assert!(
+                    (emb_before[i] - emb_after[i]).abs() < 1e-6,
+                    "Embedding mismatch at index {}: {} vs {}",
+                    i,
+                    emb_before[i],
+                    emb_after[i]
+                );
+            }
+
+            wvec_model_free();
+            fs::remove_file(path).ok();
         }
     }
 }

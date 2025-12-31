@@ -83,6 +83,16 @@ contains
     status = -4  ! ERR_FILE_IO
   end function wvec_checkpoint_save
 
+  !> Load model state from binary checkpoint file
+  !> Parameters:
+  !>   filename: null-terminated C string with file path
+  !>   filename_len: length of filename (not including null)
+  !>   epoch: output - restored epoch number
+  !>   learning_rate: output - restored learning rate
+  !> Returns: 0 on success, negative on error
+  !>   -4: file I/O error
+  !>   -5: invalid magic bytes (not a checkpoint file)
+  !>   -6: unsupported version
   function wvec_checkpoint_load(filename, filename_len, epoch, learning_rate) &
     result(status) bind(C, name="wvec_checkpoint_load")
     character(kind=c_char), intent(in) :: filename(*)
