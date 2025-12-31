@@ -56,4 +56,35 @@ contains
     status = 0  ! SUCCESS
   end function wvec_thermal_read
 
+  !> Check if CPU is overheating
+  !> Parameters:
+  !>   path: path to thermal zone temp file (C string)
+  !>   path_len: length of path string
+  !>   threshold_c: temperature threshold in Celsius
+  !> Returns: 1 if overheating, 0 if OK, negative on error
+  function wvec_thermal_check(path, path_len, threshold_c) &
+    result(is_hot) bind(C, name="wvec_thermal_check")
+    character(kind=c_char), intent(in) :: path(*)
+    integer(c_int), intent(in), value :: path_len
+    integer(c_int), intent(in), value :: threshold_c
+    integer(c_int) :: is_hot
+
+    integer(c_int) :: temp_mc, status, threshold_mc
+
+    status = wvec_thermal_read(path, path_len, temp_mc)
+    if (status /= 0) then
+      is_hot = status  ! Return error code
+      return
+    end if
+
+    ! Convert threshold to millidegrees
+    threshold_mc = threshold_c * 1000
+
+    if (temp_mc >= threshold_mc) then
+      is_hot = 1  ! Overheating
+    else
+      is_hot = 0  ! OK
+    end if
+  end function wvec_thermal_check
+
 end module wvec_thermal
