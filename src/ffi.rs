@@ -159,6 +159,28 @@ unsafe extern "C" {
         epoch: *mut c_int,
         learning_rate: *mut c_float,
     ) -> c_int;
+
+    // Thermal monitoring functions
+    /// Read CPU temperature from sysfs (millidegrees Celsius)
+    pub fn wvec_thermal_read(
+        path: *const std::ffi::c_char,
+        path_len: c_int,
+        temp_mc: *mut c_int,
+    ) -> c_int;
+
+    /// Check if CPU is overheating (returns 1 if hot, 0 if OK, negative on error)
+    pub fn wvec_thermal_check(
+        path: *const std::ffi::c_char,
+        path_len: c_int,
+        threshold_c: c_int,
+    ) -> c_int;
+
+    /// Get CPU temperature in Celsius
+    pub fn wvec_thermal_get_celsius(
+        path: *const std::ffi::c_char,
+        path_len: c_int,
+        temp_c: *mut c_int,
+    ) -> c_int;
 }
 
 #[cfg(test)]
@@ -402,5 +424,77 @@ mod tests {
             wvec_model_free();
             fs::remove_file(path).ok();
         }
+    }
+
+    #[test]
+    fn test_thermal_read() {
+        let path = "/sys/class/thermal/thermal_zone10/temp";
+        let mut temp_mc: c_int = 0;
+
+        let status = unsafe {
+            wvec_thermal_read(
+                path.as_ptr() as *const std::ffi::c_char,
+                path.len() as c_int,
+                &mut temp_mc,
+            )
+        };
+
+        assert_eq!(status, status::SUCCESS);
+        // Temperature should be reasonable (0-120°C = 0-120000 millidegrees)
+        assert!(
+            temp_mc > 0 && temp_mc < 120000,
+            "Unexpected temp: {}",
+            temp_mc
+        );
+        println!("CPU temp: {}°C", temp_mc / 1000);
+    }
+
+    #[test]
+    fn test_thermal_check_not_overheating() {
+        let path = "/sys/class/thermal/thermal_zone10/temp";
+
+        // Use high threshold (100°C) - should NOT be overheating
+        let result = unsafe {
+            wvec_thermal_check(
+                path.as_ptr() as *const std::ffi::c_char,
+                path.len() as c_int,
+                100, // 100°C threshold
+            )
+        };
+
+        assert_eq!(result, 0, "Should not be overheating at 100°C threshold");
+    }
+
+    #[test]
+    fn test_thermal_get_celsius() {
+        let path = "/sys/class/thermal/thermal_zone10/temp";
+        let mut temp_c: c_int = 0;
+
+        let status = unsafe {
+            wvec_thermal_get_celsius(
+                path.as_ptr() as *const std::ffi::c_char,
+                path.len() as c_int,
+                &mut temp_c,
+            )
+        };
+
+        assert_eq!(status, status::SUCCESS);
+        assert!(temp_c > 0 && temp_c < 120, "Unexpected temp: {}°C", temp_c);
+    }
+
+    #[test]
+    fn test_thermal_read_invalid_path() {
+        let path = "/nonexistent/thermal/path";
+        let mut temp_mc: c_int = 0;
+
+        let status = unsafe {
+            wvec_thermal_read(
+                path.as_ptr() as *const std::ffi::c_char,
+                path.len() as c_int,
+                &mut temp_mc,
+            )
+        };
+
+        assert_eq!(status, status::ERR_FILE_IO);
     }
 }
