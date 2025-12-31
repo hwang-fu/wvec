@@ -72,6 +72,14 @@ pub fn array_scale(input: &[f32], scale: f32) -> Result<Vec<f32>, FfiError> {
     }
 }
 
+/// Safe wrapper: computes sum of array elements
+pub fn array_sum(arr: &[f32]) -> f32 {
+    if arr.is_empty() {
+        return 0.0;
+    }
+    unsafe { wvec_array_sum(arr.as_ptr(), arr.len() as c_int) }
+}
+
 unsafe extern "C" {
     /// Smoke test: adds two integers (implemented in Fortran)
     pub fn wvec_add_smoke_test(a: c_int, b: c_int) -> c_int;
