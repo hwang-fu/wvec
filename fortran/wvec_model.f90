@@ -15,4 +15,48 @@ module wvec_model
 
 contains
 
+  !> Initialize model with random embeddings
+  !> Returns 0 on success, negative on error
+  function wvec_model_init(model, vocab_size, dim) result(status) bind(C, name="wvec_model_init")
+    type(W2VModel), intent(out) :: model
+    integer(c_int), intent(in), value :: vocab_size, dim
+    integer(c_int) :: status
+    integer :: i, j
+    real :: rand_val
+
+    ! Validate inputs
+    if (vocab_size <= 0 .or. dim <= 0) then
+      status = -2  ! ERR_INVALID_SIZE
+      return
+    end if
+
+    model%vocab_size = vocab_size
+    model%dim = dim
+
+    ! Allocate embedding matrices
+    allocate (model%w_in(dim, vocab_size), stat=status)
+    if (status /= 0) then
+      status = -3  ! ERR_OUT_OF_MEMORY
+      return
+    end if
+
+    allocate (model%w_out(dim, vocab_size), stat=status)
+    if (status /= 0) then
+      deallocate (model%w_in)
+      status = -3  ! ERR_OUT_OF_MEMORY
+      return
+    end if
+
+    ! Initialize with small random values [-0.5/dim, 0.5/dim]
+    do j = 1, vocab_size
+      do i = 1, dim
+        call random_number(rand_val)
+        model%w_in(i, j) = (rand_val - 0.5) / dim
+        model%w_out(i, j) = 0.0  ! Output embeddings start at zero
+      end do
+    end do
+
+    status = 0  ! SUCCESS
+  end function wvec_model_init
+
 end module wvec_model
