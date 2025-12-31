@@ -159,6 +159,28 @@ unsafe extern "C" {
         epoch: *mut c_int,
         learning_rate: *mut c_float,
     ) -> c_int;
+
+    // Thermal monitoring functions
+    /// Read CPU temperature from sysfs (millidegrees Celsius)
+    pub fn wvec_thermal_read(
+        path: *const std::ffi::c_char,
+        path_len: c_int,
+        temp_mc: *mut c_int,
+    ) -> c_int;
+
+    /// Check if CPU is overheating (returns 1 if hot, 0 if OK, negative on error)
+    pub fn wvec_thermal_check(
+        path: *const std::ffi::c_char,
+        path_len: c_int,
+        threshold_c: c_int,
+    ) -> c_int;
+
+    /// Get CPU temperature in Celsius
+    pub fn wvec_thermal_get_celsius(
+        path: *const std::ffi::c_char,
+        path_len: c_int,
+        temp_c: *mut c_int,
+    ) -> c_int;
 }
 
 #[cfg(test)]
