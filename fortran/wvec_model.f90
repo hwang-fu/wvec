@@ -11,6 +11,9 @@ module wvec_model
   real(c_float), allocatable, save :: g_w_out(:, :)  ! Output embeddings (dim, vocab_size)
   logical, save :: g_initialized = .false.
 
+  !> Shutdown flag for graceful termination
+  logical, save :: g_shutdown_requested = .false.
+
 contains
 
   !> Initialize model with random embeddings
@@ -108,5 +111,26 @@ contains
     out_vec(:) = g_w_in(:, fortran_id)
     status = 0
   end function wvec_get_embedding
+
+  !> Request graceful shutdown (called from signal handler)
+  subroutine wvec_shutdown_request() bind(C, name="wvec_shutdown_request")
+    g_shutdown_requested = .true.
+  end subroutine wvec_shutdown_request
+
+  !> Check if shutdown was requested
+  !> Returns: 1 if shutdown requested, 0 otherwise
+  function wvec_shutdown_check() result(requested) bind(C, name="wvec_shutdown_check")
+    integer(c_int) :: requested
+    if (g_shutdown_requested) then
+      requested = 1
+    else
+      requested = 0
+    end if
+  end function wvec_shutdown_check
+
+  !> Reset shutdown flag (call before starting new training)
+  subroutine wvec_shutdown_reset() bind(C, name="wvec_shutdown_reset")
+    g_shutdown_requested = .false.
+  end subroutine wvec_shutdown_reset
 
 end module wvec_model

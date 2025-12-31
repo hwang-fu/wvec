@@ -16,6 +16,7 @@ pub mod status {
     pub const ERR_FILE_IO: i32 = -4;
     pub const ERR_INVALID_MAGIC: i32 = -5;
     pub const ERR_UNSUPPORTED_VERSION: i32 = -6;
+    pub const STATUS_INTERRUPTED: i32 = 1;
 }
 
 /// Error type for FFI operations
@@ -181,6 +182,16 @@ unsafe extern "C" {
         path_len: c_int,
         temp_c: *mut c_int,
     ) -> c_int;
+
+    // Shutdown functions
+    /// Request graceful shutdown
+    pub fn wvec_shutdown_request();
+
+    /// Check if shutdown was requested (returns 1 if yes, 0 if no)
+    pub fn wvec_shutdown_check() -> c_int;
+
+    /// Reset shutdown flag
+    pub fn wvec_shutdown_reset();
 }
 
 #[cfg(test)]
@@ -496,5 +507,52 @@ mod tests {
         };
 
         assert_eq!(status, status::ERR_FILE_IO);
+    }
+
+    #[test]
+    fn test_shutdown_flag() {
+        unsafe {
+            // Initially not requested
+            assert_eq!(wvec_shutdown_check(), 0);
+
+            // Request shutdown
+            wvec_shutdown_request();
+            assert_eq!(wvec_shutdown_check(), 1);
+
+            // Reset
+            wvec_shutdown_reset();
+            assert_eq!(wvec_shutdown_check(), 0);
+        }
+    }
+
+    #[test]
+    fn test_train_corpus_interrupted() {
+        unsafe {
+            let status = wvec_model_init(100, 32);
+            assert_eq!(status, status::SUCCESS);
+
+            // Request shutdown before training
+            wvec_shutdown_request();
+
+            let corpus: Vec<c_int> = (0..1000).map(|i| i % 100).collect();
+            let neg_table: Vec<c_int> = (0..100).collect();
+
+            let status = wvec_train_corpus(
+                corpus.as_ptr(),
+                corpus.len() as c_int,
+                2,
+                5,
+                neg_table.as_ptr(),
+                neg_table.len() as c_int,
+                0.025,
+            );
+
+            // Should return INTERRUPTED status
+            assert_eq!(status, status::STATUS_INTERRUPTED);
+
+            // Cleanup
+            wvec_shutdown_reset();
+            wvec_model_free();
+        }
     }
 }
