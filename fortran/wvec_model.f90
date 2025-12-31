@@ -69,4 +69,15 @@ contains
     model%dim = 0
   end subroutine wvec_model_free
 
+  !> Get pointer to input embedding for word_id (0-indexed from Rust)
+  !> Returns pointer to the embedding vector of size `dim`
+  function wvec_get_embedding(model, word_id) result(ptr) bind(C, name="wvec_get_embedding")
+    type(W2VModel), intent(in), target :: model
+    integer(c_int), intent(in), value :: word_id
+    type(c_ptr) :: ptr
+
+    ! Convert 0-indexed (Rust) to 1-indexed (Fortran)
+    ptr = c_loc(model%w_in(1, word_id + 1))
+  end function wvec_get_embedding
+
 end module wvec_model
