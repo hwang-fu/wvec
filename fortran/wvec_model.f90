@@ -112,4 +112,9 @@ contains
     status = 0
   end function wvec_get_embedding
 
+  !> Request graceful shutdown (called from signal handler)
+  subroutine wvec_shutdown_request() bind(C, name="wvec_shutdown_request")
+    g_shutdown_requested = .true.
+  end subroutine wvec_shutdown_request
+
 end module wvec_model
