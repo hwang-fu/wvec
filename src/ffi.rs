@@ -25,6 +25,9 @@ pub enum FfiError {
     InvalidSize,
     OutOfMemory,
     Unknown(i32),
+    FileIo,
+    InvalidMagic,
+    UnsupportedVersion,
 }
 
 impl FfiError {
