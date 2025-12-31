@@ -11,6 +11,9 @@ module wvec_model
   real(c_float), allocatable, save :: g_w_out(:, :)  ! Output embeddings (dim, vocab_size)
   logical, save :: g_initialized = .false.
 
+  !> Shutdown flag for graceful termination
+  logical, save :: g_shutdown_requested = .false.
+
 contains
 
   !> Initialize model with random embeddings
