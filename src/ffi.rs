@@ -24,6 +24,18 @@ pub enum FfiError {
     Unknown(i32),
 }
 
+impl FfiError {
+    fn from_status(code: i32) -> Option<Self> {
+        match code {
+            status::SUCCESS => None,
+            status::ERR_NULL_POINTER => Some(Self::NullPointer),
+            status::ERR_INVALID_SIZE => Some(Self::InvalidSize),
+            status::ERR_OUT_OF_MEMORY => Some(Self::OutOfMemory),
+            _ => Some(Self::Unknown(code)),
+        }
+    }
+}
+
 unsafe extern "C" {
     /// Smoke test: adds two integers (implemented in Fortran)
     pub fn wvec_add_smoke_test(a: c_int, b: c_int) -> c_int;
