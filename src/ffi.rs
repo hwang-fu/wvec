@@ -144,4 +144,36 @@ mod tests {
 
         assert_eq!(status, status::ERR_INVALID_SIZE);
     }
+
+    #[test]
+    fn test_safe_array_scale() {
+        let input = vec![1.0, 2.0, 3.0, 4.0];
+        let result = array_scale(&input, 2.0).unwrap();
+
+        assert_eq!(result.len(), 4);
+        assert!((result[0] - 2.0).abs() < 1e-6);
+        assert!((result[3] - 8.0).abs() < 1e-6);
+    }
+
+    #[test]
+    fn test_safe_array_scale_empty() {
+        let input: Vec<f32> = vec![];
+        let result = array_scale(&input, 2.0);
+
+        assert!(matches!(result, Err(FfiError::InvalidSize)));
+    }
+
+    #[test]
+    fn test_safe_array_sum() {
+        let arr = vec![1.0, 2.0, 3.0, 4.0, 5.0];
+        let result = array_sum(&arr);
+        assert!((result - 15.0).abs() < 1e-6);
+    }
+
+    #[test]
+    fn test_safe_array_sum_empty() {
+        let arr: Vec<f32> = vec![];
+        let result = array_sum(&arr);
+        assert!((result - 0.0).abs() < 1e-6);
+    }
 }
