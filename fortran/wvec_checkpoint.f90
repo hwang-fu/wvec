@@ -5,6 +5,10 @@ module wvec_checkpoint
   use wvec_model
   implicit none
 
-  ! TODO: binary save/load of model state
+  !> Magic bytes for checkpoint file: "WVCK" (Word Vec ChecKpoint)
+  character(len=4), parameter :: CHECKPOINT_MAGIC = "WVCK"
+  integer(c_int), parameter :: CHECKPOINT_VERSION = 1
+
+contains
 
 end module wvec_checkpoint
