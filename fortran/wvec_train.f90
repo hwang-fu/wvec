@@ -152,8 +152,8 @@ contains
   !>   - center_embedding += g × target_embedding (accumulated, applied at end)
   !>
   !> Intuition:
-  !>   - Positive pair with low score → large g → push vectors together
-  !>   - Negative pair with high score → negative g → push vectors apart
+  !>   - Positive pair with low  score -> large    g -> push vectors together
+  !>   - Negative pair with high score -> negative g -> push vectors apart
   subroutine train_pair_internal(center_id, context_id, neg_ids, n_neg, lr)
     integer(c_int), intent(in) :: center_id, context_id, n_neg
     integer(c_int), intent(in) :: neg_ids(n_neg)
@@ -177,7 +177,7 @@ contains
     context_fortran = context_id + 1
 
     ! Positive sample (center, context): make these vectors similar
-    ! label = 1, so g = (1 - σ(score)) × lr
+    ! label = 1, so g = (1 - σ(score)) x lr
     ! If score is already high (correct), σ ≈ 1, g ≈ 0 (small update)
     ! If score is low (wrong), σ ≈ 0, g ≈ lr (large update to push together)
     score = sdot(dim, g_w_in(1, center_fortran), one, g_w_out(1, context_fortran), one)
@@ -186,7 +186,7 @@ contains
     call saxpy(dim, g, g_w_in(1, center_fortran), one, g_w_out(1, context_fortran), one)  ! update context
 
     ! Negative samples: make these vectors dissimilar
-    ! label = 0, so g = -σ(score) × lr
+    ! label = 0, so g = -σ(score) x lr
     ! If score is high (wrong), σ ≈ 1, g ≈ -lr (large negative update to push apart)
     ! If score is low (correct), σ ≈ 0, g ≈ 0 (small update)
     do i = 1, n_neg
