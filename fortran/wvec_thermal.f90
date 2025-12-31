@@ -87,6 +87,12 @@ contains
     end if
   end function wvec_thermal_check
 
+  !> Get current temperature in Celsius (convenience function)
+  !> Parameters:
+  !>   path: path to thermal zone temp file (C string)
+  !>   path_len: length of path string
+  !>   temp_c: output temperature in Celsius
+  !> Returns: 0 on success, negative on error
   function wvec_thermal_get_celsius(path, path_len, temp_c) &
     result(status) bind(C, name="wvec_thermal_get_celsius")
     character(kind=c_char), intent(in) :: path(*)
