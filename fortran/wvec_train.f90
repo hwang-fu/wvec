@@ -85,8 +85,8 @@ contains
   !> Uses OpenMP for parallel training (Hogwild style)
   function wvec_train_corpus(token_ids, n_tokens, window, n_neg, neg_table, neg_table_size, lr) &
     result(status) bind(C, name="wvec_train_corpus")
-    integer(c_int), intent(in) :: token_ids(n_tokens)
     integer(c_int), intent(in), value :: n_tokens, window, n_neg, neg_table_size
+    integer(c_int), intent(in) :: token_ids(n_tokens)
     integer(c_int), intent(in) :: neg_table(neg_table_size)
     real(c_float), intent(in), value :: lr
     integer(c_int) :: status

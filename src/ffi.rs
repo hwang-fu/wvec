@@ -120,6 +120,17 @@ unsafe extern "C" {
         n_neg: c_int,
         lr: c_float,
     ) -> c_int;
+
+    /// Train on corpus with OpenMP parallelization
+    pub fn wvec_train_corpus(
+        token_ids: *const c_int,
+        n_tokens: c_int,
+        window: c_int,
+        n_neg: c_int,
+        neg_table: *const c_int,
+        neg_table_size: c_int,
+        lr: c_float,
+    ) -> c_int;
 }
 
 #[cfg(test)]
@@ -267,6 +278,33 @@ mod tests {
                 .map(|(a, b)| (a - b).abs())
                 .sum();
             assert!(diff > 0.0, "Embedding should change after training");
+
+            wvec_model_free();
+        }
+    }
+
+    #[test]
+    fn test_train_corpus() {
+        unsafe {
+            let status = wvec_model_init(1000, 64);
+            assert_eq!(status, status::SUCCESS);
+
+            // Simple corpus: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9] repeated
+            let corpus: Vec<c_int> = (0..100).map(|i| i % 10).collect();
+
+            // Negative sampling table (uniform for test)
+            let neg_table: Vec<c_int> = (0..1000).map(|i| i % 1000).collect();
+
+            let status = wvec_train_corpus(
+                corpus.as_ptr(),
+                corpus.len() as c_int,
+                2, // window
+                5, // n_neg
+                neg_table.as_ptr(),
+                neg_table.len() as c_int,
+                0.025, // lr
+            );
+            assert_eq!(status, status::SUCCESS);
 
             wvec_model_free();
         }
