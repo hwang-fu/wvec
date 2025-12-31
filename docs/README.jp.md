@@ -98,6 +98,29 @@ cd wvec
 cargo build --release
 ```
 
+### テスト
+
+```bash
+# 全テストを実行（シングルスレッドモード必須）
+$ cargo test -- --test-threads=1
+
+running 162 tests
+...
+test result: ok. 162 passed; 0 failed; 0 ignored
+
+# ビルド成果物をクリーンアップ
+$ cargo clean
+$ make -C fortran clean
+```
+
+> **なぜ `--test-threads=1` が必要？**
+>
+> Fortran数値計算コアは埋め込み行列（`g_w_in`、`g_w_out`）に**シングルトンパターン**を使用しています。
+> この設計により単一の訓練セッション内で効率的なOpenMP並列化が可能になりますが、
+> 複数のRustテストが同時に `wvec_model_init()` / `wvec_model_free()` を安全に呼び出すことはできません。
+>
+> シングルスレッドテストは共有Fortran状態でのレースコンディションを防止します。
+
 ---
 
 ## 使用方法

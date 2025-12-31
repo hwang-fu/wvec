@@ -98,6 +98,29 @@ cd wvec
 cargo build --release
 ```
 
+### Testen
+
+```bash
+# Alle Tests ausfuhren (Single-Thread-Modus erforderlich)
+$ cargo test -- --test-threads=1
+
+running 162 tests
+...
+test result: ok. 162 passed; 0 failed; 0 ignored
+
+# Build-Artefakte aufraumen
+$ cargo clean
+$ make -C fortran clean
+```
+
+> **Warum `--test-threads=1`?**
+>
+> Der numerische Fortran-Kern verwendet ein **Singleton-Pattern** fur Embedding-Matrizen (`g_w_in`, `g_w_out`).
+> Dieses Design ermoglicht effiziente OpenMP-Parallelisierung innerhalb einer Trainingssitzung, bedeutet aber,
+> dass mehrere Rust-Tests nicht sicher gleichzeitig `wvec_model_init()` / `wvec_model_free()` aufrufen konnen.
+>
+> Single-Threaded-Tests verhindern Race Conditions auf dem gemeinsamen Fortran-Zustand.
+
 ---
 
 ## Verwendung

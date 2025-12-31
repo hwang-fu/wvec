@@ -98,6 +98,29 @@ cd wvec
 cargo build --release
 ```
 
+### 테스트
+
+```bash
+# 모든 테스트 실행 (싱글 스레드 모드 필수)
+$ cargo test -- --test-threads=1
+
+running 162 tests
+...
+test result: ok. 162 passed; 0 failed; 0 ignored
+
+# 빌드 아티팩트 정리
+$ cargo clean
+$ make -C fortran clean
+```
+
+> **왜 `--test-threads=1`인가?**
+>
+> Fortran 수치 연산 코어는 임베딩 행렬(`g_w_in`, `g_w_out`)에 **싱글톤 패턴**을 사용합니다.
+> 이 설계는 단일 훈련 세션 내에서 효율적인 OpenMP 병렬화를 가능하게 하지만,
+> 여러 Rust 테스트가 동시에 `wvec_model_init()` / `wvec_model_free()`를 안전하게 호출할 수 없음을 의미합니다.
+>
+> 싱글 스레드 테스트는 공유된 Fortran 상태에서 레이스 컨디션을 방지합니다.
+
 ---
 
 ## 사용법

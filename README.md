@@ -155,6 +155,36 @@ cd wvec
 cargo build --release
 ```
 
+### Testing
+
+```bash
+# Run all tests (single-threaded mode required)
+$ cargo test -- --test-threads=1
+
+running 162 tests
+test bpe::decode::tests::test_decode_basic ... ok
+test bpe::encode::tests::test_encode_basic ... ok
+...
+test ffi::tests::test_checkpoint_save_load ... ok
+test ffi::tests::test_train_corpus ... ok
+
+test result: ok. 162 passed; 0 failed; 0 ignored
+
+# Clean build artifacts
+$ cargo clean
+$ make -C fortran clean
+```
+
+> **Why `--test-threads=1`?**
+>
+> The Fortran numerical core uses a **singleton pattern** for embedding matrices (`g_w_in`, `g_w_out`).
+> This design enables efficient OpenMP parallelization within a single training session, but means
+> multiple Rust tests cannot safely call `wvec_model_init()` / `wvec_model_free()` concurrently.
+>
+> Running tests single-threaded prevents race conditions on the shared Fortran state. This is the
+> correct trade-off: we want **intra-training parallelism** (OpenMP threads inside Fortran), not
+> **inter-test parallelism** (multiple Rust tests fighting over the same model).
+
 ---
 
 ## Usage

@@ -98,6 +98,29 @@ cd wvec
 cargo build --release
 ```
 
+### 測試
+
+```bash
+# 執行所有測試（需要單執行緒模式）
+$ cargo test -- --test-threads=1
+
+running 162 tests
+...
+test result: ok. 162 passed; 0 failed; 0 ignored
+
+# 清理建置產物
+$ cargo clean
+$ make -C fortran clean
+```
+
+> **為什麼需要 `--test-threads=1`？**
+>
+> Fortran 數值核心使用**單例模式**來管理嵌入矩陣（`g_w_in`、`g_w_out`）。
+> 這種設計能在單次訓練中實現高效的 OpenMP 平行化，但也意味著
+> 多個 Rust 測試無法安全地同時呼叫 `wvec_model_init()` / `wvec_model_free()`。
+>
+> 單執行緒測試可防止共享 Fortran 狀態上的競爭條件。
+
 ---
 
 ## 使用方式
