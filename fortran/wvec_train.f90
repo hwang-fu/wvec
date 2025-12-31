@@ -134,7 +134,26 @@ contains
     status = 0
   end function wvec_train_corpus
 
-  !> Internal training routine (not exported)
+  !> Internal training routine for skip-gram with negative sampling (not exported to C)
+  !>
+  !> Skip-gram objective: maximize P(context | center) while minimizing P(negative | center)
+  !>
+  !> Gradient formula (from original word2vec):
+  !>   g = (label - σ(score)) × learning_rate
+  !>
+  !> where:
+  !>   - score = dot(center_embedding, target_embedding)
+  !>   - σ(x) = 1 / (1 + exp(-x))  (sigmoid function)
+  !>   - label = 1 for positive (context) pairs
+  !>   - label = 0 for negative samples
+  !>
+  !> Update rules:
+  !>   - target_embedding += g × center_embedding
+  !>   - center_embedding += g × target_embedding (accumulated, applied at end)
+  !>
+  !> Intuition:
+  !>   - Positive pair with low score → large g → push vectors together
+  !>   - Negative pair with high score → negative g → push vectors apart
   subroutine train_pair_internal(center_id, context_id, neg_ids, n_neg, lr)
     integer(c_int), intent(in) :: center_id, context_id, n_neg
     integer(c_int), intent(in) :: neg_ids(n_neg)
@@ -146,29 +165,39 @@ contains
     integer :: one
 
     dim = g_dim
-    one = 1
+    one = 1  ! BLAS stride (contiguous memory access)
+
+    ! Allocate buffer to accumulate gradients for center word.
+    ! We apply all updates at once at the end for efficiency.
     allocate (grad_center(dim))
     grad_center = 0.0
 
+    ! Convert from 0-indexed (C) to 1-indexed (Fortran)
     center_fortran = center_id + 1
     context_fortran = context_id + 1
 
-    ! Positive sample
+    ! Positive sample (center, context): make these vectors similar
+    ! label = 1, so g = (1 - σ(score)) × lr
+    ! If score is already high (correct), σ ≈ 1, g ≈ 0 (small update)
+    ! If score is low (wrong), σ ≈ 0, g ≈ lr (large update to push together)
     score = sdot(dim, g_w_in(1, center_fortran), one, g_w_out(1, context_fortran), one)
     g = (1.0 - sigmoid(score)) * lr
-    call saxpy(dim, g, g_w_out(1, context_fortran), one, grad_center, one)
-    call saxpy(dim, g, g_w_in(1, center_fortran), one, g_w_out(1, context_fortran), one)
+    call saxpy(dim, g, g_w_out(1, context_fortran), one, grad_center, one)  ! accumulate
+    call saxpy(dim, g, g_w_in(1, center_fortran), one, g_w_out(1, context_fortran), one)  ! update context
 
-    ! Negative samples
+    ! Negative samples: make these vectors dissimilar
+    ! label = 0, so g = -σ(score) × lr
+    ! If score is high (wrong), σ ≈ 1, g ≈ -lr (large negative update to push apart)
+    ! If score is low (correct), σ ≈ 0, g ≈ 0 (small update)
     do i = 1, n_neg
       neg_id_fortran = neg_ids(i) + 1
       score = sdot(dim, g_w_in(1, center_fortran), one, g_w_out(1, neg_id_fortran), one)
       g = -sigmoid(score) * lr
-      call saxpy(dim, g, g_w_out(1, neg_id_fortran), one, grad_center, one)
-      call saxpy(dim, g, g_w_in(1, center_fortran), one, g_w_out(1, neg_id_fortran), one)
+      call saxpy(dim, g, g_w_out(1, neg_id_fortran), one, grad_center, one)  ! accumulate
+      call saxpy(dim, g, g_w_in(1, center_fortran), one, g_w_out(1, neg_id_fortran), one)  ! update negative
     end do
 
-    ! Update center
+    ! Apply accumulated gradient to center embedding
     call saxpy(dim, 1.0, grad_center, one, g_w_in(1, center_fortran), one)
 
     deallocate (grad_center)
