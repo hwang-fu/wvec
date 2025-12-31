@@ -36,6 +36,42 @@ impl FfiError {
     }
 }
 
+impl std::fmt::Display for FfiError {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            Self::NullPointer => write!(f, "null pointer"),
+            Self::InvalidSize => write!(f, "invalid size"),
+            Self::OutOfMemory => write!(f, "out of memory"),
+            Self::Unknown(code) => write!(f, "unknown error (code {})", code),
+        }
+    }
+}
+
+impl std::error::Error for FfiError {}
+
+/// Safe wrapper: scales an array by a constant factor
+pub fn array_scale(input: &[f32], scale: f32) -> Result<Vec<f32>, FfiError> {
+    if input.is_empty() {
+        return Err(FfiError::InvalidSize);
+    }
+
+    let mut output = vec![0.0f32; input.len()];
+
+    let status = unsafe {
+        wvec_array_scale(
+            input.as_ptr(),
+            output.as_mut_ptr(),
+            input.len() as c_int,
+            scale,
+        )
+    };
+
+    match FfiError::from_status(status) {
+        None => Ok(output),
+        Some(err) => Err(err),
+    }
+}
+
 unsafe extern "C" {
     /// Smoke test: adds two integers (implemented in Fortran)
     pub fn wvec_add_smoke_test(a: c_int, b: c_int) -> c_int;
