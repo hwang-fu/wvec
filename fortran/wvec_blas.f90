@@ -20,6 +20,13 @@ module wvec_blas
       real(c_float), intent(in) :: x(*)
       real(c_float), intent(inout) :: y(*)
     end subroutine saxpy
+
+    !> L2 norm: result = ||x||_2
+    real(c_float) function snrm2(n, x, incx)
+      import :: c_float, c_int
+      integer(c_int), intent(in), value :: n, incx
+      real(c_float), intent(in) :: x(*)
+    end function snrm2
   end interface
 
 end module wvec_blas
