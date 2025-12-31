@@ -134,4 +134,44 @@ contains
     status = 0
   end function wvec_train_corpus
 
+  !> Internal training routine (not exported)
+  subroutine train_pair_internal(center_id, context_id, neg_ids, n_neg, lr)
+    integer(c_int), intent(in) :: center_id, context_id, n_neg
+    integer(c_int), intent(in) :: neg_ids(n_neg)
+    real(c_float), intent(in) :: lr
+
+    real(c_float) :: score, g
+    real(c_float), allocatable :: grad_center(:)
+    integer :: dim, i, neg_id_fortran, center_fortran, context_fortran
+    integer :: one
+
+    dim = g_dim
+    one = 1
+    allocate (grad_center(dim))
+    grad_center = 0.0
+
+    center_fortran = center_id + 1
+    context_fortran = context_id + 1
+
+    ! Positive sample
+    score = sdot(dim, g_w_in(1, center_fortran), one, g_w_out(1, context_fortran), one)
+    g = (1.0 - sigmoid(score)) * lr
+    call saxpy(dim, g, g_w_out(1, context_fortran), one, grad_center, one)
+    call saxpy(dim, g, g_w_in(1, center_fortran), one, g_w_out(1, context_fortran), one)
+
+    ! Negative samples
+    do i = 1, n_neg
+      neg_id_fortran = neg_ids(i) + 1
+      score = sdot(dim, g_w_in(1, center_fortran), one, g_w_out(1, neg_id_fortran), one)
+      g = -sigmoid(score) * lr
+      call saxpy(dim, g, g_w_out(1, neg_id_fortran), one, grad_center, one)
+      call saxpy(dim, g, g_w_in(1, center_fortran), one, g_w_out(1, neg_id_fortran), one)
+    end do
+
+    ! Update center
+    call saxpy(dim, 1.0, grad_center, one, g_w_in(1, center_fortran), one)
+
+    deallocate (grad_center)
+  end subroutine train_pair_internal
+
 end module wvec_train
