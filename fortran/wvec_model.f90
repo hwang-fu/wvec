@@ -128,4 +128,8 @@ contains
     end if
   end function wvec_shutdown_check
 
+  subroutine wvec_shutdown_reset() bind(C, name="wvec_shutdown_reset")
+    g_shutdown_requested = .false.
+  end subroutine wvec_shutdown_reset
+
 end module wvec_model
