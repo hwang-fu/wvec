@@ -16,6 +16,7 @@ pub mod status {
     pub const ERR_FILE_IO: i32 = -4;
     pub const ERR_INVALID_MAGIC: i32 = -5;
     pub const ERR_UNSUPPORTED_VERSION: i32 = -6;
+    pub const STATUS_INTERRUPTED: i32 = 1;
 }
 
 /// Error type for FFI operations
