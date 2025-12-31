@@ -59,4 +59,14 @@ contains
     status = 0  ! SUCCESS
   end function wvec_model_init
 
+  !> Free model memory
+  subroutine wvec_model_free(model) bind(C, name="wvec_model_free")
+    type(W2VModel), intent(inout) :: model
+
+    if (allocated(model%w_in)) deallocate (model%w_in)
+    if (allocated(model%w_out)) deallocate (model%w_out)
+    model%vocab_size = 0
+    model%dim = 0
+  end subroutine wvec_model_free
+
 end module wvec_model
