@@ -13,6 +13,9 @@ pub mod status {
     pub const ERR_NULL_POINTER: i32 = -1;
     pub const ERR_INVALID_SIZE: i32 = -2;
     pub const ERR_OUT_OF_MEMORY: i32 = -3;
+    pub const ERR_FILE_IO: i32 = -4;
+    pub const ERR_INVALID_MAGIC: i32 = -5;
+    pub const ERR_UNSUPPORTED_VERSION: i32 = -6;
 }
 
 /// Error type for FFI operations
