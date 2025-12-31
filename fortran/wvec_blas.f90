@@ -11,6 +11,15 @@ module wvec_blas
       integer(c_int), intent(in), value :: n, incx, incy
       real(c_float), intent(in) :: x(*), y(*)
     end function sdot
+
+    !> Vector update: y = alpha * x + y
+    subroutine saxpy(n, alpha, x, incx, y, incy)
+      import :: c_float, c_int
+      integer(c_int), intent(in), value :: n, incx, incy
+      real(c_float), intent(in), value :: alpha
+      real(c_float), intent(in) :: x(*)
+      real(c_float), intent(inout) :: y(*)
+    end subroutine saxpy
   end interface
 
 end module wvec_blas
