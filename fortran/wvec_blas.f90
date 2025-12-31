@@ -27,6 +27,14 @@ module wvec_blas
       integer(c_int), intent(in), value :: n, incx
       real(c_float), intent(in) :: x(*)
     end function snrm2
+
+    !> Scale vector: x = alpha * x
+    subroutine sscal(n, alpha, x, incx)
+      import :: c_float, c_int
+      integer(c_int), intent(in), value :: n, incx
+      real(c_float), intent(in), value :: alpha
+      real(c_float), intent(inout) :: x(*)
+    end subroutine sscal
   end interface
 
 end module wvec_blas
