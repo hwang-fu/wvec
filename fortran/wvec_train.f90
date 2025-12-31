@@ -105,6 +105,10 @@ contains
 
     !$omp do schedule(dynamic, 1000)
     do i = 1, n_tokens
+
+      ! Skip remaining work if shutdown requested
+      if (g_shutdown_requested) cycle
+
       center_id = token_ids(i)
 
       ! Context window bounds
@@ -131,7 +135,12 @@ contains
     deallocate (neg_ids)
     !$omp end parallel
 
-    status = 0
+    ! Return 1 if interrupted, 0 if completed normally
+    if (g_shutdown_requested) then
+      status = 1  ! STATUS_INTERRUPTED
+    else
+      status = 0  ! SUCCESS
+    end if
   end function wvec_train_corpus
 
   !> Internal training routine for skip-gram with negative sampling (not exported to C)
