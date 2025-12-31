@@ -5,6 +5,7 @@
 
 pub mod bpe;
 pub mod cli;
+pub mod cmd;
 pub mod ffi;
 pub mod input;
 pub mod text;

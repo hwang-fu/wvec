@@ -1,3 +1,5 @@
+//! info command: Show model/vocabulary information
+
 use crate::bpe::load;
 use crate::cli::{get_arg, has_flag};
 use std::path::Path;
